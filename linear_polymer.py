@@ -44,25 +44,25 @@ class LinearPolymer:
         # Smeared fields. ##### Check that the Fourier transform handles box dimensions correctly!! #####
         Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ]
 
-        W =  1j*self.q.T.dot( Psi_s )
+        #W =  1j*self.q.T.dot( Psi_s )
+        W = 1j * np.einsum('Ia,I...->a...',self.q,Psi_s)
 
         self.qF[0]  = np.exp( -W[0]  )
         self.qB[-1] = np.exp( -W[-1] )
     
         for i in range( self.N-1 ):
             # forwards propagator
-            self.qF[i+1] = np.exp( -W[i+1] )*ift( self.Phi*ft(self.qF[i]) )
+            self.qF[i+1] = np.exp( -W[i+1] )*self.simulation_box.ift( self.Phi*self.simulation_box.ft(self.qF[i]) )
             # backwards propagator
             j = self.N-i-1
-            self.qB[j-1] = np.exp( -W[j-1] )*ift( self.Phi*ft(self.qB[j]) )
+            self.qB[j-1] = np.exp( -W[j-1] )*self.simulation_box.ift( self.Phi*self.simulation_box.ft(self.qB[j]) )
 
         self.Q = np.sum( self.qF[-1] )  * self.dV / self.V
         qs = self.qF * self.qB * np.exp(W)
 
-        self.rho  = self.rho_bulk * self.q.dot( qs )
+        self.rho  = self.rho_bulk * np.einsum('Ia,a...->I...',self.q,qs)
         if self.is_canonical:
             self.rho /= self.Q
-
 
 if __name__ == "__main__":
     import simulation_box as sim_box
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     lB = 2.
     electr = int_pot.Yukawa(lB)
 
-    grid_dimensions = [10,13]
+    grid_dimensions = [10,12,23]
     b = 1.
     a = b/np.sqrt(6.)
     side_lengths = a * np.array(grid_dimensions,dtype=float)
