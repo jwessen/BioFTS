@@ -16,10 +16,13 @@ class LinearPolymer:
             print("[ERROR] Number of interactions inferred from charges does not match simulation_box.Nint!")
             sys.exit()
 
-        self.simulation_box = simulation_box # Simulation box that it lives in
+        self.simulation_box  = simulation_box # Simulation box that it lives in
         self.grid_dimensions = simulation_box.grid_dimensions
         self.ft  = simulation_box.ft
         self.ift = simulation_box.ift
+
+        # Add this molecular species to the simulation box's list over contained species.
+        self.simulation_box.species += (self,)
         
         self.k2 = simulation_box.k2
         self.V  = simulation_box.V
@@ -36,33 +39,86 @@ class LinearPolymer:
         density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
         self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
 
-        # Include total bead density operators? Residue-specifc densities?
+        # Bead-center number density operator
+        self.rhob = np.zeros( density_shape , dtype=complex ) + self.rho_bulk/self.N
+
+        self.calc_densities()
+
+        # Residue-specifc densities?
 
     # Calculates the density operators for current field configuration in simulation_box
     def calc_densities( self ):
 
+        if np.any( np.isnan(self.simulation_box.Psi) ):
+            print("#1")
+            sys.exit()
+
         # Smeared fields. ##### Check that the Fourier transform handles box dimensions correctly!! #####
-        Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ]
+        Psi_s = [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi)) ) for Psi in self.simulation_box.Psi ]
+        #Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ] 
+
+        if np.any( np.isnan(Psi_s) ):
+            print("#2")
+            sys.exit()
 
         #W =  1j*self.q.T.dot( Psi_s )
         W = 1j * np.einsum('Ia,I...->a...',self.q,Psi_s)
+
+        if np.any( np.isnan(W) ):
+            print("#3")
+            sys.exit()
 
         self.qF[0]  = np.exp( -W[0]  )
         self.qB[-1] = np.exp( -W[-1] )
     
         for i in range( self.N-1 ):
             # forwards propagator
-            self.qF[i+1] = np.exp( -W[i+1] )*self.simulation_box.ift( self.Phi*self.simulation_box.ft(self.qF[i]) )
+            self.qF[i+1] = np.exp( -W[i+1] )*self.ift( self.Phi*self.ft(self.qF[i]) )
             # backwards propagator
             j = self.N-i-1
-            self.qB[j-1] = np.exp( -W[j-1] )*self.simulation_box.ift( self.Phi*self.simulation_box.ft(self.qB[j]) )
+            self.qB[j-1] = np.exp( -W[j-1] )*self.ift( self.Phi*self.ft(self.qB[j]) )
 
-        self.Q = np.sum( self.qF[-1] )  * self.dV / self.V
-        qs = self.qF * self.qB * np.exp(W)
+            if np.any( np.isnan(self.qF) ):
+                print("#4")
+                sys.exit()
+            if np.any( np.isnan(self.qB) ):
+                print("#5")
+                sys.exit()
+
+        self.Q = np.sum( self.qF[-1] ) * self.dV / self.V
+
+        if np.isnan(self.Q):
+            print("#6")
+            sys.exit()
+        qs = self.qF * self.qB * np.exp(W) # Residue-specific bead center number density! (if multiplied by rho_bulk)
+
+        if np.any( np.isnan(qs) ):
+            print("#7")
+            sys.exit()
 
         self.rho  = self.rho_bulk * np.einsum('Ia,a...->I...',self.q,qs)
+        self.rhob = np.sum(qs,axis=0) * self.rho_bulk
         if self.is_canonical:
-            self.rho /= self.Q
+            self.rho  /= self.Q
+            self.rhob /= self.Q
+
+        for I in range(self.Nint):
+            self.rho[I] = self.ift( self.Gamma*self.ft(self.rho[I]) )
+
+        #print("Q:",self.Q)
+    
+    # Calculates the coefficients of the quadratic term in the expansion of Q.
+    def calc_quadratic_coefficients(self):
+        res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
+        connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) )
+        g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
+
+        if self.is_canonical:
+            for I in range(self.Nint):
+                for J in range(self.Nint):
+                    g[I,J][ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
+
+        return g * self.rho_bulk
 
 if __name__ == "__main__":
     import simulation_box as sim_box
@@ -97,7 +153,6 @@ if __name__ == "__main__":
 
     polye = LinearPolymer(q,a,b,rho_bulk,sb)
     polye.calc_densities()
-
 
     
 

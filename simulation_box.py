@@ -11,8 +11,8 @@ class SimulationBox:
             sys.exit()
         
         self.d  = len(grid_dimensions) # Number of spatial dimensions
-        self.dx = np.array(side_lengths,dtype=float) / np.array( side_lengths , dtype=float )
-        
+        self.dx = np.array(side_lengths,dtype=float) / np.array( grid_dimensions , dtype=float )
+
         self.V  = np.prod(self.side_lengths)
         self.dV = np.prod(self.dx)
 
@@ -33,27 +33,43 @@ class SimulationBox:
                                                                    for j in range(self.grid_dimensions[1]) ]
                                                                    for i in range(self.grid_dimensions[0]) ])
         else:
-            print("[ERROR] d =",self.d,"is not implemented!")
+            print("[ERROR] d =",self.d,"dimensions is not implemented!")
             sys.exit()
         
-        self.Nint = len(interactions)
-        field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
-        self.Psi = np.zeros(field_shape,dtype=complex)
+        self.interactions = interactions
+        self.Nint = len(self.interactions)
+        self.field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+        # All fields
+        self.Psi = np.zeros(self.field_shape,dtype=complex)
         
         # Tuple of species (e.g. LinearPolymer objects)
         self.species = ()
 
-        self.G0 = np.array([ I.V_inverse(self.k2) for I in interactions], dtype=float)
+        self.G0 = np.array([ I.V_inverse(self.k2) for I in self.interactions], dtype=float)
 
         if use_GPU:
             print("[ERROR] GPU not implemented yet.")
-            sys.exit
+            sys.exit()
         else:
             self.ft  = np.fft.fftn
             self.ift = np.fft.ifftn
 
-    def add_species(self, molecule):
-        self.species += (molecule,)
+    def set_fields_to_homogeneous_saddle(self):
+        self.Psi *= 0
+        for molecule in self.species:
+            if molecule.is_canonical == False:
+                print("Warning! Species",molecule,"is in grand-canonical ensemble. Treating as canonical to compute saddle.")
+        
+        G0_MFT = np.array([ I.V_inverse( np.array([0]) ) for I in self.interactions], dtype=float)[:,0]
+        
+        rho_bulks = np.array([ molecule.rho_bulk for molecule in self.species ])
+        for I in range(self.Nint):
+            if G0_MFT[I] != 0:
+                qs = np.array([ np.sum(molecule.q[I]) for molecule in self.species] )
+                rho = np.sum( rho_bulks * qs )
+                self.Psi[I] -= 1j * rho / G0_MFT[I]
+
+
 
 if __name__ == "__main__":
     import interaction_potentials as int_pot
