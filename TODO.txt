@@ -1,0 +1,4 @@
+* Think about the sign in V inverse for yukawa potential
+* Check that the polyampholyte example reproduces the MiMB chemical potentials
+* Figure out if fields can be shifted to fluctuations around MFT saddle do reduce numerical errors in chain porpagators.
+* CL integrator, noise should be an array. Should be able to turn off noise only for certain fields. 

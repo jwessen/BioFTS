@@ -3,7 +3,7 @@ import sys
 
 class LinearPolymer:
     def __init__(self, q, a, b, rho_bulk, simulation_box, is_canonical=True):
-        self.q = q                       # q[I,alpha] is charge type I of bead alpha
+        self.q = np.copy(q)              # q[I,alpha] is charge type I of bead alpha
         self.a = a                       # Smearing length
         self.b = b                       # Kuhn Length
         self.is_canonical = is_canonical # True if canonical ensemble, False if grand-canonical ensemble
@@ -53,8 +53,8 @@ class LinearPolymer:
             print("#1")
             sys.exit()
 
-        # Smeared fields. ##### Check that the Fourier transform handles box dimensions correctly!! #####
-        Psi_s = [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi)) ) for Psi in self.simulation_box.Psi ]
+        # Calculate propagators from fluctuations about the mean. Density operators for canonical ensemble species are unchanged. 
+        Psi_s = [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] 
         #Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ] 
 
         if np.any( np.isnan(Psi_s) ):
@@ -62,7 +62,7 @@ class LinearPolymer:
             sys.exit()
 
         #W =  1j*self.q.T.dot( Psi_s )
-        W = 1j * np.einsum('Ia,I...->a...',self.q,Psi_s)
+        W = 1j * np.einsum('Ia,I...->a...',self.q, Psi_s)
 
         if np.any( np.isnan(W) ):
             print("#3")
@@ -79,10 +79,10 @@ class LinearPolymer:
             self.qB[j-1] = np.exp( -W[j-1] )*self.ift( self.Phi*self.ft(self.qB[j]) )
 
             if np.any( np.isnan(self.qF) ):
-                print("#4")
+                print("#4, i:",i)
                 sys.exit()
             if np.any( np.isnan(self.qB) ):
-                print("#5")
+                print("#5, j:",j)
                 sys.exit()
 
         self.Q = np.sum( self.qF[-1] ) * self.dV / self.V
@@ -101,16 +101,17 @@ class LinearPolymer:
         if self.is_canonical:
             self.rho  /= self.Q
             self.rhob /= self.Q
+        else:
+            print("Grand-canonical not implemented!! Think about normalization.")
+            sys.exit()
 
         for I in range(self.Nint):
             self.rho[I] = self.ift( self.Gamma*self.ft(self.rho[I]) )
-
-        #print("Q:",self.Q)
     
     # Calculates the coefficients of the quadratic term in the expansion of Q.
     def calc_quadratic_coefficients(self):
         res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
-        connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) )
+        connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
         g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
 
         if self.is_canonical:

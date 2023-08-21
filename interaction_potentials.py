@@ -7,7 +7,7 @@ class Yukawa:
         self.kappa = kappa
     
     def V_inverse(self,k2):
-        return (-k2 + self.kappa**2) / (4*np.pi*self.l)
+        return -(-k2 + self.kappa**2) / (4.*np.pi*self.l) #### <----- Why is there an overall minus sign here? It works.... but why??
 
 # Contact potential V(r) = delta(r) / gamma. Exact compressibility if gamma=0
 class Contact:

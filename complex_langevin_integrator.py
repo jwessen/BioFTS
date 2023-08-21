@@ -18,9 +18,28 @@ class ComplexLangevinIntegrator:
         setup_function()
         
         # Stepping function to be used for CL evolution
-        self.take_step = available_methods[method]
+        self.shift = available_methods[method]
 
         self.simulation_box.set_fields_to_homogeneous_saddle()
+
+    def _CL_noise(self):
+        if self.noise == 0:
+            return 0
+        std = np.sqrt(2. * self.dt / self.simulation_box.dV) * self.noise
+        eta = std * np.random.standard_normal( self.simulation_box.field_shape )
+        return eta
+    
+    def take_step(self):
+        #Calculate the field shifts
+        dPsi = self.shift()
+
+        # Update fields
+        self.simulation_box.Psi += dPsi
+
+        # Re-calculate all densites
+        for molecule in self.simulation_box.species:
+            molecule.calc_densities()
+
         
     def _Euler_step(self):
         # rho[I,x,y,z,...] is type-I charge density
@@ -31,35 +50,22 @@ class ComplexLangevinIntegrator:
 
         # Deterministic field shifts
         tmp = np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
-        dPsi = -self.dt * ( 1j*rho + tmp )
+        dPsi = -self.dt * ( 1.j*rho + tmp )
 
-        if self.noise != 0:
-            # Add Langevin noise to field shifts
-            std = np.sqrt(2. * self.dt / self.simulation_box.dV) * self.noise
-            eta = std * np.random.standard_normal( self.simulation_box.field_shape )
-            dPsi += eta
+        # Add Langevin noise to field shifts    
+        dPsi += self._CL_noise()
 
-        # Update fields
-        self.simulation_box.Psi += dPsi
-
-        # Re-calculate all densites
-        for molecule in self.simulation_box.species:
-            molecule.calc_densities()
+        return dPsi
+        
 
     def _setup_Euler(self):
         pass
 
     def _SemiImplicit_step(self):
-        # rho[I,x,y,z,...] is type-I charge density
-        rho = np.sum( np.array([molecule.rho for molecule in self.simulation_box.species]) , axis=0)
+        # Start with Euler step
+        dPsi = self._Euler_step()
 
-        # Fourier transformed fields
-        f_Psi = np.array([ self.simulation_box.ft( Psi ) for Psi in self.simulation_box.Psi])
-
-        # Deterministic field shifts
-        tmp = np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
-        dPsi = -self.dt * ( 1j*rho + tmp )
-
+        # Do the semi-implicit thing
         dPsi = np.array([ self.simulation_box.ft(Psi) for Psi in dPsi ])
         
         idx = ''.join( ['i','j','k'][:self.simulation_box.d] )
@@ -68,18 +74,8 @@ class ComplexLangevinIntegrator:
 
         dPsi = np.array([ self.simulation_box.ift(Psi) for Psi in dPsi ])
 
-        if self.noise != 0:
-            # Add Langevin noise to field shifts
-            std = np.sqrt(2. * self.dt / self.simulation_box.dV) * self.noise
-            eta = std * np.random.standard_normal( self.simulation_box.field_shape )
-            dPsi += eta
+        return dPsi
 
-        # Update fields
-        self.simulation_box.Psi += dPsi
-
-        # Re-calculate all densites
-        for molecule in self.simulation_box.species:
-            molecule.calc_densities()
         
     
 

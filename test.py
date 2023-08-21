@@ -1,10 +1,9 @@
 import numpy as np
 import sys
 
-d = 1
-idx = ''.join( ['i','j','k','l'][:d] )
-mult_string = idx+'IJ,J'+idx+'->I'+idx
+# dims = np.array( [32,32,32], dtype=int )
+# sides = dims / np.sqrt(6.)
+# dx = sides/dims
+# print( np.prod(dx) )
 
-print( mult_string )
-# spatial_index_string 
-# 'ijkIJ,Jijk->Iijk'
+print(1./0.0068)

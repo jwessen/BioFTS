@@ -20,11 +20,13 @@ class SimulationBox:
         if self.d==1:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])
             self.k2 = kx**2
+            self.idx_str = 'i'
         elif self.d==2:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])
             ky = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[1],self.dx[1])
             self.k2 = np.array( [[ kx[i]**2 + ky[j]**2 for j in range(self.grid_dimensions[1]) ] 
                                                        for i in range(self.grid_dimensions[0]) ])
+            self.idx_str = 'ij'
         elif self.d==3:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])
             ky = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[1],self.dx[1])
@@ -32,6 +34,8 @@ class SimulationBox:
             self.k2 = np.array( [[[ kx[i]**2 + ky[j]**2 + kz[k]**2 for k in range(self.grid_dimensions[2]) ] 
                                                                    for j in range(self.grid_dimensions[1]) ]
                                                                    for i in range(self.grid_dimensions[0]) ])
+
+            self.idx_str = 'ijk'
         else:
             print("[ERROR] d =",self.d,"dimensions is not implemented!")
             sys.exit()
@@ -47,12 +51,24 @@ class SimulationBox:
 
         self.G0 = np.array([ I.V_inverse(self.k2) for I in self.interactions], dtype=float)
 
-        if use_GPU:
-            print("[ERROR] GPU not implemented yet.")
+        # if use_GPU:
+        #     print("[ERROR] GPU not implemented yet.")
+        #     sys.exit()
+        # else:
+        #     self.ft  = np.fft.fftn
+        #     self.ift = np.fft.ifftn
+
+    def ft(self,field):
+        if np.any( field.shape != self.grid_dimensions ):
+            print( field.shape, self.grid_dimensions)
             sys.exit()
-        else:
-            self.ft  = np.fft.fftn
-            self.ift = np.fft.ifftn
+        return np.fft.fftn(field)
+
+    def ift(self,field):
+        if np.any( field.shape != self.grid_dimensions ):
+            print( field.shape, self.grid_dimensions)
+            sys.exit()
+        return np.fft.ifftn(field)
 
     def set_fields_to_homogeneous_saddle(self):
         self.Psi *= 0

@@ -26,27 +26,28 @@ def av_density_to_1d(rho_in):
 rho0 = 10. # bulk density
 b = 1.
 a = b/np.sqrt(6.)
-chi0 = 0.5 # Homopolymer Flory-Huggins chi-parameter. Heteropolymer has effective chi-parameter of chi_eff = chi0 * (fraction of H monomers)
-phi  = 0.5 # Volume fraction of polymer beads
+chi0 = 3.0 # Homopolymer Flory-Huggins chi-parameter. Heteropolymer has effective chi-parameter of chi_eff = chi0 * (fraction of H monomers)
+phi  = 0.3 # Volume fraction of polymer beads
 
 # Compressibility
-gamma = 0.2
+gamma = 0.4
 compr = int_pot.Contact(gamma)
 
 # Hydrophobicity
-kappa_h = 1. # Inverse range of the HP interaction
-l_h     = kappa_h**2 * chi0 / (2*np.pi*rho0)
+#kappa_h = 0.1 # Inverse range of the HP interaction
+#l_h     = kappa_h**2 * chi0 / (2*np.pi*rho0)
+#hydrophobicity = int_pot.Yukawa(l_h,kappa_h)
 
-hydrophobicity = int_pot.Yukawa(l_h,kappa_h)
+hydrophobicity = int_pot.Contact(2*rho0/chi0)
 
-grid_dimensions = [10,20,100]
-side_lengths = a * np.array(grid_dimensions,dtype=float)
+grid_dimensions = [24,24,128] # [20,20,128]
+side_lengths = a * np.array(grid_dimensions,dtype=float) 
 
 interactions = (compr,hydrophobicity,)
 sb = sim_box.SimulationBox(grid_dimensions,side_lengths,interactions)
 
 ### Define a di-block polyampholyte ####
-seq = 'HP'*15
+seq = 'H'*30 
 N = len(seq)
 q = np.zeros( (sb.Nint,N) ,dtype=complex )
 q[0,:] += 1. # sizes for excluded volume interactions
@@ -69,21 +70,48 @@ solvent = lp.LinearPolymer(q,a,b,rho_bulk,sb)
 solvent.calc_densities()
 
 # Set-up the CL integrator
-dt = 0.0001
-cl = cli.ComplexLangevinIntegrator(dt, sb, method='semi-implicit',noise=1)
+dt = 1e-4
+cl      = cli.ComplexLangevinIntegrator(dt, sb, method='euler',noise=1)
+cl_SCFT = cli.ComplexLangevinIntegrator(dt, sb, method='euler',noise=0)
 
-for i in range(1000+1):
+### Set initial field configuration ####
+sb.Psi[0][0,0] += 100*1j*np.array([np.sin(np.pi * x / grid_dimensions[-1] ) * x**2 for x in range(grid_dimensions[-1])] ) / grid_dimensions[-1]**2
+sb.Psi[1][0,0] += 100   *np.array([np.sin(np.pi * x / grid_dimensions[-1] ) * x**2 for x in range(grid_dimensions[-1])] ) / grid_dimensions[-1]**2
+
+
+plt.axis()
+plt.ion()
+plt.show()
+
+for i in range(10000+1):
     print(i)
     av_fields = np.array([ np.mean(Psi) for Psi in sb.Psi])
     print("mean fields:",av_fields)
-    cl.take_step()
+    # if i<100:
+    #     cl.take_step()
+    # else:
+    #     cl_SCFT.take_step()
+    #cl.take_step()
+    cl_SCFT.take_step()
 
-    if i%50==0:
+    if i%20==0:
         rhob = av_density_to_1d(hp_chain.rhob)
-        plt.plot(rhob.real,'-' ,color='C0')
-        plt.plot(rhob.imag,'--',color='C0')
+        cm = ( np.mean( np.array(range(len(rhob))) * rhob ) / np.mean(rhob) ).real
+        rhob = np.roll(rhob,int(-cm +len(rhob)/2.) )
+
+        plt.clf()
+
+        z = np.linspace(0,side_lengths[-1],grid_dimensions[-1]) * 3.8
+        plt.plot(z,rhob.real,'-' ,color='C0')
+        plt.plot(z,rhob.imag,'--',color='C0')
 
         rhow = av_density_to_1d(solvent.rhob)
-        plt.plot(rhow.real,'-' ,color='C1')
-        plt.plot(rhow.imag,'--',color='C1')
-        plt.show()
+        rhow = np.roll(rhow,int(-cm +len(rhow)/2.) )
+
+        plt.plot(z,rhow.real,'-' ,color='C1')
+        plt.plot(z,rhow.imag,'--',color='C1')
+        
+        plt.title("i=" + str(i) + ", t=" + str(i*dt) )
+
+        plt.draw()
+        plt.pause(0.1)
