@@ -33,8 +33,11 @@ class ComplexLangevinIntegrator:
         #Calculate the field shifts
         dPsi = self.shift()
 
+        # Add Langevin noise to field shifts    
+        dPsi += self._CL_noise()
+
         # Update fields
-        self.simulation_box.Psi += dPsi
+        self.simulation_box.Psi += dPsi    
 
         # Re-calculate all densites
         for molecule in self.simulation_box.species:
@@ -52,8 +55,8 @@ class ComplexLangevinIntegrator:
         tmp = np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
         dPsi = -self.dt * ( 1.j*rho + tmp )
 
-        # Add Langevin noise to field shifts    
-        dPsi += self._CL_noise()
+        # # Add Langevin noise to field shifts    
+        # dPsi += self._CL_noise()
 
         return dPsi
         
@@ -75,9 +78,6 @@ class ComplexLangevinIntegrator:
         dPsi = np.array([ self.simulation_box.ift(Psi) for Psi in dPsi ])
 
         return dPsi
-
-        
-    
 
     def _setup_SemiImplicit(self): 
         K = np.einsum( 'IJ,I...->...IJ' , np.eye(self.simulation_box.Nint) , self.simulation_box.G0 , dtype=complex)

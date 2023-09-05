@@ -44,7 +44,7 @@ class LinearPolymer:
 
         self.calc_densities()
 
-        # Residue-specifc densities?
+        # Residue-specific densities?
 
     # Calculates the density operators for current field configuration in simulation_box
     def calc_densities( self ):
