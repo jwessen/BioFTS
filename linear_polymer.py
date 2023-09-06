@@ -2,49 +2,59 @@ import numpy as np
 import sys
 
 class LinearPolymer:
-    def __init__(self, q, a, b, rho_bulk, simulation_box, is_canonical=True):
-        self.q = np.copy(q)              # q[I,alpha] is charge type I of bead alpha
-        self.a = a                       # Smearing length
-        self.b = b                       # Kuhn Length
-        self.is_canonical = is_canonical # True if canonical ensemble, False if grand-canonical ensemble
-        self.rho_bulk = rho_bulk         # Molecule number density (n_i/V) for canonical ensemble, activity parameter 
+    def __init__(self, q, a, b, rho_bulk, simulation_box, molecule_id = '', is_canonical=True):
 
-        self.Nint = len(q)     # Number of interactions
-        self.N    = len(q[0])  # Polymerization degree
-
-        if self.Nint != simulation_box.Nint:
-            print("[ERROR] Number of interactions inferred from charges does not match simulation_box.Nint!")
+        if rho_bulk==0:
+            print("Zero density detected, not adding molecule",molecule_id,"to simulation box.")
+        elif rho_bulk<0:
+            print("[ERROR] Negative bulk density detected for molecule",molecule_id,"! Exiting.")
             sys.exit()
+        else:
+            print("Adding molecule",molecule_id,"to simulation box.")
 
-        self.simulation_box  = simulation_box # Simulation box that it lives in
-        self.grid_dimensions = simulation_box.grid_dimensions
-        self.ft  = simulation_box.ft
-        self.ift = simulation_box.ift
-
-        # Add this molecular species to the simulation box's list over contained species.
-        self.simulation_box.species += (self,)
+            self.q = np.copy(q)              # q[I,alpha] is charge type I of bead alpha
+            self.a = a                       # Smearing length
+            self.b = b                       # Kuhn Length
+            self.is_canonical = is_canonical # True if canonical ensemble, False if grand-canonical ensemble
+            self.rho_bulk = rho_bulk         # Molecule number density (n_i/V) for canonical ensemble, activity parameter 
+            self.molecule_id = molecule_id   # Identifier for this molecule
         
-        self.k2 = simulation_box.k2
-        self.V  = simulation_box.V
-        self.dV = simulation_box.dV
+            self.Nint = len(q)     # Number of interactions
+            self.N    = len(q[0])  # Polymerization degree
 
-        self.Gamma   = np.exp(-self.k2*self.a**2/2.) # Gaussian smearing
-        self.Phi     = np.exp(-self.k2*self.b**2/6.) # Gaussian chain n.n propagator
+            if self.Nint != simulation_box.Nint:
+                print("[ERROR] Number of interactions inferred from charges does not match simulation_box.Nint!")
+                sys.exit()
 
-        self.Q = 1. + 0j  # Single molecule partition function
-        propagator_shape = np.insert(self.grid_dimensions, 0, self.N)
-        self.qF = np.zeros( propagator_shape , dtype=complex )
-        self.qB = np.zeros( propagator_shape , dtype=complex )
+            self.simulation_box  = simulation_box # Simulation box that it lives in
+            self.grid_dimensions = simulation_box.grid_dimensions
+            self.ft  = simulation_box.ft
+            self.ift = simulation_box.ift
 
-        density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
-        self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
+            # Add this molecular species to the simulation box's list over contained species.
+            self.simulation_box.species += (self,)
+            
+            self.k2 = simulation_box.k2
+            self.V  = simulation_box.V
+            self.dV = simulation_box.dV
 
-        # Bead-center number density operator
-        self.rhob = np.zeros( density_shape , dtype=complex ) + self.rho_bulk/self.N
+            self.Gamma   = np.exp(-self.k2*self.a**2/2.) # Gaussian smearing
+            self.Phi     = np.exp(-self.k2*self.b**2/6.) # Gaussian chain n.n propagator
 
-        self.calc_densities()
+            self.Q = 1. + 0j  # Single molecule partition function
+            propagator_shape = np.insert(self.grid_dimensions, 0, self.N)
+            self.qF = np.zeros( propagator_shape , dtype=complex )
+            self.qB = np.zeros( propagator_shape , dtype=complex )
 
-        # Residue-specific densities?
+            density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+            self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
+
+            # Bead-center number density operator
+            self.rhob = np.zeros( density_shape , dtype=complex ) + self.rho_bulk/self.N
+
+            self.calc_densities()
+
+            # Residue-specific densities?
 
     # Calculates the density operators for current field configuration in simulation_box
     def calc_densities( self ):

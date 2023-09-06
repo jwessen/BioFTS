@@ -16,6 +16,8 @@ class SimulationBox:
         self.V  = np.prod(self.side_lengths)
         self.dV = np.prod(self.dx)
 
+        self.t = 0. # Current Complex Langevin time
+
         # The below code constructs the wave-vectors for d=1,2,3. Any way to do it for generic dimensions??
         if self.d==1:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])

@@ -20,7 +20,7 @@ class ComplexLangevinIntegrator:
         # Stepping function to be used for CL evolution
         self.shift = available_methods[method]
 
-        self.simulation_box.set_fields_to_homogeneous_saddle()
+        #self.simulation_box.set_fields_to_homogeneous_saddle()
 
     def _CL_noise(self):
         if self.noise == 0:
@@ -65,6 +65,7 @@ class ComplexLangevinIntegrator:
         pass
 
     def _SemiImplicit_step(self):
+
         # Start with Euler step
         dPsi = self._Euler_step()
 
@@ -80,6 +81,8 @@ class ComplexLangevinIntegrator:
         return dPsi
 
     def _setup_SemiImplicit(self): 
+        print("Setting up the semi-implicit method...")
+        
         K = np.einsum( 'IJ,I...->...IJ' , np.eye(self.simulation_box.Nint) , self.simulation_box.G0 , dtype=complex)
         for mol in self.simulation_box.species:
             K += mol.calc_quadratic_coefficients()
@@ -87,7 +90,19 @@ class ComplexLangevinIntegrator:
         M += self.dt * K
         self.Minv = np.linalg.inv(M)
 
+    def run_ComplexLangevin(self, n_steps, sample_interval=1, sampling_tasks = ()):
 
+        for i in range(n_steps):
+            if i%sample_interval==0:
+                print("i:",i,"t:",np.round(self.simulation_box.t,decimals=5))
+                for task in sampling_tasks:
+                    task.sample(i)
+
+            self.take_step()
+            self.simulation_box.t += self.dt
+        
+        for task in sampling_tasks:
+            task.finalize()
 
 if __name__ == "__main__":
     import simulation_box as sim_box
