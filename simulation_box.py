@@ -1,9 +1,16 @@
-import numpy as np
 import sys
 
 # Rectangular d-dimensional simulation box
 class SimulationBox:
     def __init__(self, grid_dimensions, side_lengths, interactions, use_GPU = False):
+
+        if use_GPU:
+            print("[ERROR] GPU not implemented yet.")
+            sys.exit()
+        else:
+            import numpy as np
+            self.np = np
+
         self.grid_dimensions = np.array(grid_dimensions,dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
         self.side_lengths    = side_lengths                         # (Lx, Ly, Lz, ...) Side lengths of the simulation box
         if len(grid_dimensions) != len(side_lengths):
@@ -61,16 +68,16 @@ class SimulationBox:
         #     self.ift = np.fft.ifftn
 
     def ft(self,field):
-        if np.any( field.shape != self.grid_dimensions ):
+        if self.np.any( field.shape != self.grid_dimensions ):
             print( field.shape, self.grid_dimensions)
             sys.exit()
-        return np.fft.fftn(field)
+        return self.np.fft.fftn(field)
 
     def ift(self,field):
-        if np.any( field.shape != self.grid_dimensions ):
+        if self.np.any( field.shape != self.grid_dimensions ):
             print( field.shape, self.grid_dimensions)
             sys.exit()
-        return np.fft.ifftn(field)
+        return self.np.fft.ifftn(field)
 
     def set_fields_to_homogeneous_saddle(self):
         self.Psi *= 0
@@ -78,19 +85,20 @@ class SimulationBox:
             if molecule.is_canonical == False:
                 print("Warning! Species",molecule,"is in grand-canonical ensemble. Treating as canonical to compute saddle.")
         
-        G0_MFT = np.array([ I.V_inverse( np.array([0]) ) for I in self.interactions], dtype=float)[:,0]
+        G0_MFT = self.np.array([ I.V_inverse( self.np.array([0]) ) for I in self.interactions], dtype=float)[:,0]
         
         rho_bulks = np.array([ molecule.rho_bulk for molecule in self.species ])
         for I in range(self.Nint):
             if G0_MFT[I] != 0:
-                qs = np.array([ np.sum(molecule.q[I]) for molecule in self.species] )
-                rho = np.sum( rho_bulks * qs )
+                qs = self.np.array([ np.sum(molecule.q[I]) for molecule in self.species] )
+                rho = self.np.sum( rho_bulks * qs )
                 self.Psi[I] -= 1j * rho / G0_MFT[I]
 
 
 
 if __name__ == "__main__":
     import interaction_potentials as int_pot
+    import numpy as np
 
     # Compressibility
     gamma = 3.0

@@ -1,8 +1,10 @@
-import numpy as np
 import sys
 
 class LinearPolymer:
     def __init__(self, q, a, b, rho_bulk, simulation_box, molecule_id = '', is_canonical=True):
+
+        self.np = simulation_box.np
+        np = self.np
 
         if rho_bulk==0:
             print("Zero density detected, not adding molecule",molecule_id,"to simulation box.")
@@ -58,6 +60,7 @@ class LinearPolymer:
 
     # Calculates the density operators for current field configuration in simulation_box
     def calc_densities( self ):
+        np = self.np
 
         if np.any( np.isnan(self.simulation_box.Psi) ):
             print("#1")
@@ -120,6 +123,8 @@ class LinearPolymer:
     
     # Calculates the coefficients of the quadratic term in the expansion of Q.
     def calc_quadratic_coefficients(self):
+        np = self.np
+
         res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
         connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
         g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
@@ -130,10 +135,13 @@ class LinearPolymer:
                     g[I,J][ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
 
         return g * self.rho_bulk
+    
+
 
 if __name__ == "__main__":
     import simulation_box as sim_box
     import interaction_potentials as int_pot
+    import numpy as np
 
     ##### Set-up simulation box ######
     # Compressibility

@@ -1,9 +1,11 @@
-import numpy as np
 import sys
 
 class ComplexLangevinIntegrator:
 
     def __init__(self, dt, simulation_box, noise = 1., method='semi-implicit'):
+        
+        self.np = simulation_box.np
+
         self.dt = dt # time-step
         self.simulation_box = simulation_box
         self.noise = noise
@@ -25,8 +27,8 @@ class ComplexLangevinIntegrator:
     def _CL_noise(self):
         if self.noise == 0:
             return 0
-        std = np.sqrt(2. * self.dt / self.simulation_box.dV) * self.noise
-        eta = std * np.random.standard_normal( self.simulation_box.field_shape )
+        std = self.np.sqrt(2. * self.dt / self.simulation_box.dV) * self.noise
+        eta = std * self.np.random.standard_normal( self.simulation_box.field_shape )
         return eta
     
     def take_step(self):
@@ -46,13 +48,13 @@ class ComplexLangevinIntegrator:
         
     def _Euler_step(self):
         # rho[I,x,y,z,...] is type-I charge density
-        rho = np.sum( np.array([molecule.rho for molecule in self.simulation_box.species]) , axis=0)
+        rho = self.np.sum( self.np.array([molecule.rho for molecule in self.simulation_box.species]) , axis=0)
 
         # Fourier transformed fields
-        f_Psi = np.array([ self.simulation_box.ft( Psi ) for Psi in self.simulation_box.Psi])
+        f_Psi = self.np.array([ self.simulation_box.ft( Psi ) for Psi in self.simulation_box.Psi])
 
         # Deterministic field shifts
-        tmp = np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
+        tmp = self.np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
         dPsi = -self.dt * ( 1.j*rho + tmp )
 
         # # Add Langevin noise to field shifts    
@@ -70,31 +72,31 @@ class ComplexLangevinIntegrator:
         dPsi = self._Euler_step()
 
         # Do the semi-implicit thing
-        dPsi = np.array([ self.simulation_box.ft(Psi) for Psi in dPsi ])
+        dPsi = self.np.array([ self.simulation_box.ft(Psi) for Psi in dPsi ])
         
         idx = ''.join( ['i','j','k'][:self.simulation_box.d] )
         mult_string = idx+'IJ,J'+idx+'->I'+idx
-        dPsi = np.einsum( mult_string, self.Minv, dPsi)
+        dPsi = self.np.einsum( mult_string, self.Minv, dPsi)
 
-        dPsi = np.array([ self.simulation_box.ift(Psi) for Psi in dPsi ])
+        dPsi = self.np.array([ self.simulation_box.ift(Psi) for Psi in dPsi ])
 
         return dPsi
 
     def _setup_SemiImplicit(self): 
         print("Setting up the semi-implicit method...")
         
-        K = np.einsum( 'IJ,I...->...IJ' , np.eye(self.simulation_box.Nint) , self.simulation_box.G0 , dtype=complex)
+        K = self.np.einsum( 'IJ,I...->...IJ' , self.np.eye(self.simulation_box.Nint) , self.simulation_box.G0 , dtype=complex)
         for mol in self.simulation_box.species:
             K += mol.calc_quadratic_coefficients()
-        M = np.einsum('...,IJ->...IJ',np.ones(self.simulation_box.grid_dimensions), np.eye( self.simulation_box.Nint ), dtype=complex )
+        M = self.np.einsum('...,IJ->...IJ',self.np.ones(self.simulation_box.grid_dimensions), self.np.eye( self.simulation_box.Nint ), dtype=complex )
         M += self.dt * K
-        self.Minv = np.linalg.inv(M)
+        self.Minv = self.np.linalg.inv(M)
 
     def run_ComplexLangevin(self, n_steps, sample_interval=1, sampling_tasks = ()):
 
         for i in range(n_steps):
             if i%sample_interval==0:
-                print("i:",i,"t:",np.round(self.simulation_box.t,decimals=5))
+                print("i:",i,"t:",self.np.round(self.simulation_box.t,decimals=5))
                 for task in sampling_tasks:
                     task.sample(i)
 
@@ -108,6 +110,7 @@ if __name__ == "__main__":
     import simulation_box as sim_box
     import interaction_potentials as int_pot
     import linear_polymer as lp
+    import numpy as np
 
     #### for plotting #####
     import matplotlib.pyplot as plt
