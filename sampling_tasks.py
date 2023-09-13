@@ -34,7 +34,7 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         plt.ion()
 
         # Chemical potential of first species
-        self.mu = []
+        self.mu = [ [] for _ in range(len(self.species_to_plot)) ]
         self.t  = []
 
     
@@ -59,7 +59,9 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
     def sample(self,sample_index):
         np = self.np
 
-        self.mu.append( np.log(self.simulation_box.species[0].Q).real )
+        for i in range(len(self.species_to_plot)):
+            s = self.species_to_plot[i]
+            self.mu[s].append( np.log(self.simulation_box.species[s].Q) )
         self.t.append( self.simulation_box.t )
 
         # Find center-of-mass of first molecule species using real part of density
@@ -110,10 +112,15 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
 
         ax = self.axes[1]
         ax.clear()
-        ax.plot(self.t,self.mu,'-')
+        for i in range(len(self.species_to_plot)):
+            s = self.species_to_plot[i]
+            clr = 'C'+str(i)
+            ax.plot(self.t,np.array(self.mu[i]).real,'-',color=clr,label=self.simulation_box.species[s].molecule_id)
+            if self.show_imaginary_part:
+                ax.plot(self.t,np.array(self.mu[i]).imag,'--',color=clr)
+        #ax.plot(self.t,self.mu,'-')
         ax.set_xlabel(r'$t$')
         ax.set_ylabel(r'$\mu$')
-
 
         self.fig.canvas.draw()
         self.plt.pause(0.01)

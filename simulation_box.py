@@ -25,7 +25,7 @@ class SimulationBox:
 
         self.t = 0. # Current Complex Langevin time
 
-        # The below code constructs the wave-vectors for d=1,2,3. Any way to do it for generic dimensions??
+        # The below code constructs the wave-vectors for d=1,2,3. Is there a clean way to do it for generic number of dimensions??
         if self.d==1:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])
             self.k2 = kx**2
@@ -60,12 +60,6 @@ class SimulationBox:
 
         self.G0 = np.array([ I.V_inverse(self.k2) for I in self.interactions], dtype=float)
 
-        # if use_GPU:
-        #     print("[ERROR] GPU not implemented yet.")
-        #     sys.exit()
-        # else:
-        #     self.ft  = np.fft.fftn
-        #     self.ift = np.fft.ifftn
 
     def ft(self,field):
         if self.np.any( field.shape != self.grid_dimensions ):
