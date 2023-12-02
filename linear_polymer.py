@@ -127,6 +127,7 @@ class LinearPolymer:
 
         res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
         connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
+        connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, self.Gamma)
         g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
 
         if self.is_canonical:

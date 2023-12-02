@@ -39,12 +39,17 @@ class ComplexLangevinIntegrator:
         dPsi += self._CL_noise()
 
         # Update fields
-        self.simulation_box.Psi += dPsi    
+        self.simulation_box.Psi += dPsi
 
-        # Re-calculate all densites
+        # Re-calculate all densities
         for molecule in self.simulation_box.species:
             molecule.calc_densities()
 
+        # Return False if there are NaNs in the fields or densities
+        if self.np.isnan( self.simulation_box.Psi ).any() or self.np.array([self.np.isnan( species.rho ) for species in self.simulation_box.species]).any():
+            return False
+        else:
+            return True
         
     def _Euler_step(self):
         # rho[I,x,y,z,...] is type-I charge density
