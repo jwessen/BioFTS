@@ -129,11 +129,13 @@ class LinearPolymer:
         connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
         connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, self.Gamma)
         g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
+        #g = np.einsum( 'Ia,Jb,ab...->IJ...', self.q, self.q, connection_tensor )
 
         if self.is_canonical:
-            for I in range(self.Nint):
-                for J in range(self.Nint):
-                    g[I,J][ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
+            # for I in range(self.Nint):
+            #     for J in range(self.Nint):
+            #         g[I,J][ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
+            g[ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
 
         return g * self.rho_bulk
     
