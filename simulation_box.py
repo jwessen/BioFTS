@@ -87,6 +87,15 @@ class SimulationBox:
                 qs = self.np.array([ np.sum(molecule.q[I]) for molecule in self.species] )
                 rho = self.np.sum( rho_bulks * qs )
                 self.Psi[I] -= 1j * rho / G0_MFT[I]
+    
+    # def save(self, filename):
+    #     import pickle
+    #     with open(filename,'wb') as f:
+    #         # Field configuration
+    #         pickle.dump(self.Psi,f)
+    #         # Species
+    #         pickle.dump(self.species,f)
+
 
 
 

@@ -176,6 +176,48 @@ class Save_1d_Density_Profiles(SamplingTask):
             with open(file, 'a') as f:
                 f.write(str(t) + ' ' + str(int(sample_index)) + ' ' + str(mu) + ' ' + ' '.join(map(str, rho)) + '\n')
             
+    def finalize(self):
+        pass
 
+# Save field configuration to file
+class Save_Field_Configuration(SamplingTask):
+
+    def __init__(self, simulation_box, data_directory='', load_last_configuration=False):
+        self.simulation_box = simulation_box
+        self.np = simulation_box.np
+
+        self.filename = data_directory + 'field_configuration.npy'
+
+        if load_last_configuration:
+            self.load_field_configuration()
+
+    # Save the field configuration (Psi) and the time (t) to file
+    def sample(self,sample_index):
+        np = self.np
+        Psi = self.simulation_box.Psi
+        t = self.simulation_box.t
+        
+        np.save(self.filename, np.array([Psi,t],dtype=object) )
+
+    # Set field configuration from file
+    def load_field_configuration(self):
+
+        # Check if file exists
+        import os.path
+        if os.path.isfile(self.filename):
+            np = self.np
+            Psi, t = np.load(self.filename, allow_pickle=True)
+            self.simulation_box.Psi = Psi
+            self.simulation_box.t = t
+
+            # Calculate densities
+            for molecule in self.simulation_box.species:
+                molecule.calc_densities()
+        else:
+            print("File",self.filename,"does not exist! Starting from t=0.")
+            # Throw exception ValueError
+            #raise ValueError('File' + self.filename + '.npy' + ' does not exist!')
+
+    # Do nothing
     def finalize(self):
         pass

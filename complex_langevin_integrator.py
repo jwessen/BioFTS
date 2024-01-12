@@ -31,6 +31,7 @@ class ComplexLangevinIntegrator:
         eta = std * self.np.random.standard_normal( self.simulation_box.field_shape )
         return eta
     
+    # Return True if the step was successful, False if there were NaNs
     def take_step(self):
         #Calculate the field shifts
         dPsi = self.shift()

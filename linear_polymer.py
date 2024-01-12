@@ -52,7 +52,7 @@ class LinearPolymer:
             self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
 
             # Bead-center number density operator
-            self.rhob = np.zeros( density_shape , dtype=complex ) + self.rho_bulk/self.N
+            self.rhob = np.zeros( density_shape , dtype=complex ) + self.rho_bulk * self.N
 
             self.calc_densities()
 
@@ -139,7 +139,7 @@ class LinearPolymer:
 
         return g * self.rho_bulk
     
-
+    
 
 if __name__ == "__main__":
     import simulation_box as sim_box
