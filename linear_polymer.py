@@ -44,11 +44,15 @@ class LinearPolymer:
             self.Phi     = np.exp(-self.k2*self.b**2/6.) # Gaussian chain n.n propagator
 
             self.Q = 1. + 0j  # Single molecule partition function
-            propagator_shape = np.insert(self.grid_dimensions, 0, self.N)
+            #propagator_shape = np.insert(self.grid_dimensions, 0, self.N)
+            #propagator_shape = np.concatenate((np.array([self.N]), np.asarray(self.grid_dimensions)))
+            propagator_shape = (self.N,) + self.grid_dimensions
             self.qF = np.zeros( propagator_shape , dtype=complex )
             self.qB = np.zeros( propagator_shape , dtype=complex )
 
-            density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+            #density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+            #density_shape = np.concatenate((np.array([self.Nint]), np.asarray(self.grid_dimensions)))
+            density_shape = (self.Nint,) + self.grid_dimensions
             self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
 
             # Bead-center number density operator
@@ -67,7 +71,7 @@ class LinearPolymer:
             sys.exit()
 
         # Calculate propagators from fluctuations about the mean. Density operators for canonical ensemble species are unchanged. 
-        Psi_s = [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] 
+        Psi_s = np.asarray( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
         #Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ] 
 
         if np.any( np.isnan(Psi_s) ):
@@ -132,9 +136,6 @@ class LinearPolymer:
         #g = np.einsum( 'Ia,Jb,ab...->IJ...', self.q, self.q, connection_tensor )
 
         if self.is_canonical:
-            # for I in range(self.Nint):
-            #     for J in range(self.Nint):
-            #         g[I,J][ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
             g[ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
 
         return g * self.rho_bulk

@@ -4,15 +4,17 @@ import sys
 class SimulationBox:
     def __init__(self, grid_dimensions, side_lengths, interactions, use_GPU = False):
 
+        self.use_GPU = use_GPU
         if use_GPU:
-            print("[ERROR] GPU not implemented yet.")
-            sys.exit()
+            import cupy as np
+            self.np = np 
         else:
             import numpy as np
             self.np = np
 
-        self.grid_dimensions = np.array(grid_dimensions,dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
-        self.side_lengths    = side_lengths                         # (Lx, Ly, Lz, ...) Side lengths of the simulation box
+        self.grid_dimensions = tuple(grid_dimensions) #np.array([gd for gd in grid_dimensions],dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
+        #print("grid_dimensions:",self.grid_dimensions)
+        self.side_lengths    = np.array(side_lengths)                         # (Lx, Ly, Lz, ...) Side lengths of the simulation box
         if len(grid_dimensions) != len(side_lengths):
             print("[ERROR] grid_dimensions and side_lengths do not have the same shape!")
             sys.exit()
@@ -50,8 +52,15 @@ class SimulationBox:
             sys.exit()
         
         self.interactions = interactions
+        for interaction in self.interactions:
+            interaction.set_simulation_box(self)
+
         self.Nint = len(self.interactions)
-        self.field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+        #self.field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
+        #self.field_shape = tuple( np.concatenate((np.array([self.Nint]), np.asarray(self.grid_dimensions))) )
+        self.field_shape = (self.Nint,) + self.grid_dimensions
+        print("field_shape:",self.field_shape)
+
         # All fields
         self.Psi = np.zeros(self.field_shape,dtype=complex)
         
@@ -60,17 +69,10 @@ class SimulationBox:
 
         self.G0 = np.array([ I.V_inverse(self.k2) for I in self.interactions], dtype=float)
 
-
     def ft(self,field):
-        if self.np.any( field.shape != self.grid_dimensions ):
-            print( field.shape, self.grid_dimensions)
-            sys.exit()
         return self.np.fft.fftn(field)
 
     def ift(self,field):
-        if self.np.any( field.shape != self.grid_dimensions ):
-            print( field.shape, self.grid_dimensions)
-            sys.exit()
         return self.np.fft.ifftn(field)
 
     def set_fields_to_homogeneous_saddle(self):
@@ -88,16 +90,6 @@ class SimulationBox:
                 rho = self.np.sum( rho_bulks * qs )
                 self.Psi[I] -= 1j * rho / G0_MFT[I]
     
-    # def save(self, filename):
-    #     import pickle
-    #     with open(filename,'wb') as f:
-    #         # Field configuration
-    #         pickle.dump(self.Psi,f)
-    #         # Species
-    #         pickle.dump(self.species,f)
-
-
-
 
 if __name__ == "__main__":
     import interaction_potentials as int_pot

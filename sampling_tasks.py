@@ -24,9 +24,10 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         self.simulation_box = simulation_box
 
         if species_to_plot is None:
-            self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
+            #self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
+            self.species_to_plot = tuple(range(len(simulation_box.species)))
         else:
-            self.species_to_plot = species_to_plot
+            self.species_to_plot = tuple(species_to_plot)
         
         self.show_imaginary_part = show_imaginary_part
 
@@ -134,14 +135,15 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
 
 # Save density profiles to file
 class Save_1d_Density_Profiles(SamplingTask):
-    def __init__(self, simulation_box, data_directory, species_to_plot=None):
+    def __init__(self, simulation_box, data_directory='', species_to_plot=None, remove_old_data_files=False):
         self.simulation_box = simulation_box
         self.np = simulation_box.np
 
         if species_to_plot is None:
-            self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
+            #self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
+            self.species_to_plot =  tuple( range(len(simulation_box.species)))
         else:
-            self.species_to_plot = species_to_plot
+            self.species_to_plot = tuple(species_to_plot)
         
         self.data_directory = data_directory
 
@@ -149,9 +151,10 @@ class Save_1d_Density_Profiles(SamplingTask):
         self.data_files = [ self.data_directory + 'density_profile_' + self.simulation_box.species[s].molecule_id + '.txt' for s in self.species_to_plot ]
 
         # Remove old data files
-        for file in self.data_files:
-            with open(file, 'w') as f:
-                pass
+        if remove_old_data_files:
+            for file in self.data_files:
+                with open(file, 'w') as f:
+                    pass
 
     def av_density_to_1d(self,rho_in):
         np = self.np
@@ -182,9 +185,11 @@ class Save_1d_Density_Profiles(SamplingTask):
 # Save field configuration to file
 class Save_Field_Configuration(SamplingTask):
 
-    def __init__(self, simulation_box, data_directory='', load_last_configuration=False):
+    def __init__(self, simulation_box, data_directory='', load_last_configuration=True):
         self.simulation_box = simulation_box
-        self.np = simulation_box.np
+        #self.np = simulation_box.np
+        import numpy as np
+        self.np = np
 
         self.filename = data_directory + 'field_configuration.npy'
 
@@ -194,7 +199,10 @@ class Save_Field_Configuration(SamplingTask):
     # Save the field configuration (Psi) and the time (t) to file
     def sample(self,sample_index):
         np = self.np
-        Psi = self.simulation_box.Psi
+        if self.simulation_box.use_GPU:
+            Psi = self.simulation_box.Psi.get()
+        else:
+            Psi = np.array(self.simulation_box.Psi)
         t = self.simulation_box.t
         
         np.save(self.filename, np.array([Psi,t],dtype=object) )
@@ -207,14 +215,14 @@ class Save_Field_Configuration(SamplingTask):
         if os.path.isfile(self.filename):
             np = self.np
             Psi, t = np.load(self.filename, allow_pickle=True)
-            self.simulation_box.Psi = Psi
+            self.simulation_box.Psi = self.simulation_box.np.asarray( Psi )
             self.simulation_box.t = t
 
             # Calculate densities
             for molecule in self.simulation_box.species:
                 molecule.calc_densities()
         else:
-            print("File",self.filename,"does not exist! Starting from t=0.")
+            print("File",self.filename,"does not exist. Starting from t=0.")
             # Throw exception ValueError
             #raise ValueError('File' + self.filename + '.npy' + ' does not exist!')
 
