@@ -182,10 +182,12 @@ class Save_1d_Density_Profiles(SamplingTask):
     def finalize(self):
         pass
 
-# Save field configuration to file
+# Save latest field configuration to file
 class Save_Field_Configuration(SamplingTask):
 
     def __init__(self, simulation_box, data_directory='', load_last_configuration=True):
+        import h5py
+
         self.simulation_box = simulation_box
         #self.np = simulation_box.np
         import numpy as np
@@ -205,6 +207,7 @@ class Save_Field_Configuration(SamplingTask):
             Psi = np.array(self.simulation_box.Psi)
         t = self.simulation_box.t
         
+        # Overwrite the latest field configuration to file
         np.save(self.filename, np.array([Psi,t],dtype=object) )
 
     # Set field configuration from file
@@ -227,5 +230,90 @@ class Save_Field_Configuration(SamplingTask):
             #raise ValueError('File' + self.filename + '.npy' + ' does not exist!')
 
     # Do nothing
+    def finalize(self):
+        pass
+
+# Store simulation trajectory using the h5py package
+class Save_Trajectory(SamplingTask):
+    def __init__(self, simulation_box, data_directory='', load_last_configuration=True):
+        import h5py
+        self.h5py = h5py
+
+        # Print h5py version
+        print(h5py.version.info)
+
+        import numpy as np
+        self.np = np
+        
+        self.simulation_box = simulation_box
+        self.filename = data_directory + 'trajectory.h5'
+
+        if load_last_configuration:
+            self.load_field_configuration()
+            # self.file = h5py.File(self.filename, 'a') # Append to existing file
+
+            # self.ds_time = self.file['time']
+            # self.ds_Psi = self.file['Psi']
+        else:
+            trajectory_file = h5py.File(self.filename, 'w') # Overwrite existing file
+
+            # Define the datasets:
+            #   - time: CL time
+            #   - Psi: Field configuration
+            trajectory_file.create_dataset('time', (0,), dtype='f',chunks=True, maxshape=(None,))
+            field_data_shape = (0,) + self.simulation_box.Psi.shape
+            trajectory_file.create_dataset('Psi', field_data_shape, 
+                                           dtype='complex', 
+                                           compression='gzip', 
+                                           compression_opts=9, 
+                                           chunks=True, 
+                                           maxshape=(None,)+self.simulation_box.Psi.shape)
+
+            # self.ds_time = self.file.create_dataset('time', (0,), dtype='f',chunks=True, maxshape=(None,))
+            # field_data_shape = (0,) + self.simulation_box.Psi.shape
+            # self.ds_Psi = self.file.create_dataset('Psi', field_data_shape, dtype='complex',chunks=True, maxshape=(None,)+self.simulation_box.Psi.shape)
+
+    def sample(self, sample_index):
+        np = self.np
+        if self.simulation_box.use_GPU:
+            Psi = self.simulation_box.Psi.get()
+        else:
+            Psi = np.array(self.simulation_box.Psi)
+        t = self.simulation_box.t
+
+        with self.h5py.File(self.filename, 'a') as trajectory_file:
+            # Get the number of samples already stored in the datasets
+            n_samples = trajectory_file['time'].shape[0]
+
+            # Append to the datasets
+            trajectory_file['time'].resize((n_samples+1,))
+            trajectory_file['time'][n_samples] = t
+
+            trajectory_file['Psi'].resize((n_samples+1,) + Psi.shape)
+            trajectory_file['Psi'][n_samples] = Psi
+        # # Append to the datasets
+        # self.ds_time.resize((n_samples+1,))
+        # self.ds_time[n_samples] = t
+
+        # self.ds_Psi.resize((n_samples+1,) + Psi.shape)
+        # self.ds_Psi[n_samples] = Psi
+
+    def load_field_configuration(self):
+        # Check if file exists
+        import os.path
+        if os.path.isfile(self.filename):
+
+            trajectory_file = self.h5py.File(self.filename, 'r')
+            self.simulation_box.t = trajectory_file['time'][-1]
+            self.simulation_box.Psi = self.simulation_box.np.asarray( trajectory_file['Psi'][-1] )
+            trajectory_file.close()
+
+            # Calculate densities
+            for molecule in self.simulation_box.species:
+                molecule.calc_densities()
+        else:
+            # Throw exception ValueError
+            raise ValueError('Cannot initialize from file since ' + self.filename + ' does not exist!')
+    
     def finalize(self):
         pass
