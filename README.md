@@ -16,16 +16,15 @@ For the serious reader, the following book beautifully covers the topic:
 
 For an application of FTS to IDPs with both long-range electrostatic interactions and short-range residue-specific interactions, see:
 
-5. J. Wessén, S. Das., T. Pal, H. S. Chan (2021). Analytical Formulation and Field-Theoretic Simulation of Sequence-Specific Phase Separation of Protein-Like Heteropolymers with Short- and Long-Spatial-Range Interactions, J. Phys. Chem. B 2022, 126, 9222−9245, <hlink>https://doi.org/10.1021/acs.jpcb.2c06181</hlink>
+5. J. Wessén, S. Das., T. Pal, H. S. Chan. Analytical Formulation and Field-Theoretic Simulation of Sequence-Specific Phase Separation of Protein-Like Heteropolymers with Short- and Long-Spatial-Range Interactions, J. Phys. Chem. B 2022, 126, 9222−9245, <hlink>https://doi.org/10.1021/acs.jpcb.2c06181</hlink>
 
 # Overview
 
 `biofts' can be used to study any polymer field theory on the form
 
 $$
-x = y + z
+H[\lbrace\psi_i \rbrace] = -\sum_{i=1}^{n_{\rm C}} \ln Q_i[\lbrace \psi_i \rbrace] 
 $$
-
 
 
 
