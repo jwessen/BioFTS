@@ -20,9 +20,9 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 
 `biofts' can be used to study any polymer field theory on the form
 
-\begin{equation}
+$$
 x = y + z
-\end{equation}
+$$
 
 
 
