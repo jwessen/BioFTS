@@ -23,7 +23,7 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 `biofts' can be used to study any polymer field theory on the form
 
 $$
-H[\lbrace\psi_i \rbrace] = -\sum_{i=1}^{n_{\rm C}} \ln Q_i[\lbrace \psi_i \rbrace] 
+H[\lbrace\psi_a \rbrace] = -\sum_{i} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \mathbf{r} \frac{1}{2} \sum_{a}
 $$
 
 
