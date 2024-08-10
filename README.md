@@ -2,7 +2,7 @@
 
 This repository contains the source code for the `biofts` package which is python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling. Although the code is applicable to a large class of polymer field theories, a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates. 
 
-# Background
+## Background
 
 If you are new to polymer field theories and FTS, the following references will provide a good starting point:
 
@@ -18,9 +18,9 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 
 5. J. Wessén, S. Das., T. Pal, H. S. Chan. Analytical Formulation and Field-Theoretic Simulation of Sequence-Specific Phase Separation of Protein-Like Heteropolymers with Short- and Long-Spatial-Range Interactions, J. Phys. Chem. B 2022, 126, 9222−9245, <hlink>https://doi.org/10.1021/acs.jpcb.2c06181</hlink>
 
-# Overview
+## Overview
 
-`biofts' can be used to study any polymer field theory described by a Hamiltonian on the form
+`biofts` can be used to study any polymer field theory described by a Hamiltonian on the form
 
 $$
 H[\lbrace\psi_a(\mathbf{r},t) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \mathbf{r} \frac{1}{2} \sum_{a} \psi_a(\mathbf{r}) \hat{V}_a^{-1} \psi_a(\mathbf{r}) 
@@ -34,41 +34,51 @@ $$
 \frac{\partial \psi_a(\mathbf{r},t)}{\partial t} = -\frac{\delta H}{\delta \psi_a(\mathbf{r},t)} + \eta_a(\mathbf{r},t)
 $$
 
-where $\eta_a(\mathbf{r},t)$ is a real-valued Gaussian noise term. This is achieved by approximating the continuous fields $\psi_a(\mathbf{r},t)$ as a discrete set of field variables living on the sites of a $d$-dimensional rectangular lattice, and then evolving the using a finite-difference scheme. The resulting field trajectories can then be used to compute thermodynamic averages of observables of interest. 
+where $\eta_a(\mathbf{r},t)$ is a real-valued Gaussian noise term. This is achieved by approximating the continuous fields $\psi_a(\mathbf{r},t)$ as a discrete set of field variables living on the sites of a $d$-dimensional rectangular lattice, and then evolving the fields in $t$ using a finite-difference scheme. The resulting field trajectories can then be used to compute thermodynamic averages of observables of interest. 
 
+## Quick start
 
+First, import the package along with Numpy:
 
-
-
-
-A Python package for field theoretic simulations of biomolecule solutions. 
-
-## Installation
-To install the package, run the following command in the terminal:
-```
-pip install biofts
-```
-## Usage
-The package can be imported as follows:
-```
+```python
 import biofts
+import numpy as np
 ```
-The package contains the following modules:
-* `biofts`: The main module for running simulations.
 
+Setting up a simulation in `biofts` is done through the following steps:
 
-## Examples
-The following examples demonstrate how to use the package.
+### Step 1: Define the interactions
 
-### Example 1: Simulating a homopolymer solution
+In FTS, each field corresponds to a a specific interaction in the system, so the first step is to define the interactions in the system. `biofts` currently supports Yukawa-type interactions, $V(r) = l/r \exp(-\kappa r)$, and contact interactions, $V(r) = \gamma^{-1} \delta(r)$. These can be defined as follows:
 
-The following code simulates a homopolymer solution using the default parameters. The simulation is run for 10000 iterations and the results are saved in the folder `results`. The simulation is performed on a single CPU core.
+```python
+
+# Excluded volume contact interactions
+v = 0.0068
+excluded_volume = biofts.Contact(1./v)
+
+# (Un-screened) Electrostatics
+lB = 2.
+kappa = 0.0
+electrostatics = biofts.Yukawa(lB,kappa)
+
+# Collect all interactions in a tuple
+interactions = (excluded_volume,electrostatics)
 ```
-import biofts
 
-biofts.simulate_homopolymer_solution(
-    iterations=10000,
-    output_folder='results',
-    num_cores=1
-)
+You can define any number of interactions in this way.
+
+### Step 2: Create the simulation box
+
+A simulation box is created by specifying the number of lattice sites in each dimension, the lattice spacing, and the interactions in the system. For example,
+
+```python
+
+# Define the grid
+grid_dimensions = [16,16,80] # Number of lattice sites in each dimension. This can be a 1D, 2D, or 3D grid.
+side_lengths    = [8.,8.,40.] # Length of the simulation box in each dimension
+
+# Create the simulation box
+sb = biofts.SimulationBox(grid_dimensions,side_lengths,interactions)
+
 ```
