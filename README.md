@@ -89,6 +89,14 @@ sb = biofts.SimulationBox(grid_dimensions,side_lengths,interactions)
 
 Currently, `biofts` currently only supports linear bead-spring polymers where each monomer is associated with a set of generalized charges that governs its interactions with other monomers through the interactions defined in Step 1. For applications to IDPs, each monomer typically represents a residue in the protein sequence. 
 
+The single-molecule partition function for this type of polymer is given by
+
+$$
+Q_i[\lbrace \psi_a \rbrace] = \frac{1}{V} \left[ \frac{3}{2 \pi b^2} \right]^{3(N-1)/2} \left() \prod_{\alpha=1}^{N} \int \mathrm{d}^3 \mathbf{R}_{\alpha} \right) \exp \left[- \frac{3}{2 b^2} \sum_{\alpha=1}^{N-1} (\mathbf{R}_{\alpha+1} - \mathbf{R}_{\alpha})^2 \right]
+$$
+
+
+
 The following code snippet shows how to add a single polymer species, corresponding to a linear chain of E (glutamic acid) and K (lysine) residues:
 
 ```python
@@ -103,7 +111,7 @@ q = np.zeros( (2,N) ) # Generalized charges. The first index refers to interacti
 q[0,:] += 1. # The generalized charge for the excluded volume interaction is the monomer size, set to 1 for all monomers.
 
 # Electrostatic interactions
-charge_seq = {'E':-1,'K':1} # Electric charges for each amino acid type
+aa_charges = {'E':-1,'K':1} # Electric charges for each amino acid type
 q[1,:] = [ charge_seq[aa] for aa in aa_sequence ]
 
 # Chain density
