@@ -92,7 +92,7 @@ Currently, `biofts` currently only supports linear bead-spring polymers where ea
 The single-molecule partition function for this type of polymer is given by
 
 $$
-\exp \left[ - \frac{3}{2 b^2} \sum_{\alpha=1}^{N-1}(R_{\alpha+1}-R_{\alpha})^2 \right]
+\exp \left[ - \frac{3}{2 b^2} \sum_{\alpha=1}^{N-1}(\mathbf{R}_{\alpha+1}-\mathbf{R}_{\alpha})^2 \right]
 $$
 
 $$
