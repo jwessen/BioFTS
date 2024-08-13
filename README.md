@@ -98,7 +98,7 @@ $$
 where
 
 $$
-\Delta R \equiv R_{\alpha+1} - R_{\alpha}
+\Delta R \equiv \vec{R}_{\alpha+1} - R_{\alpha}
 $$
 
 and $q_{a,\alpha}$ are the generalized charges for the polymer species. 
