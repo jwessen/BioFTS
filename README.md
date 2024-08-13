@@ -51,7 +51,7 @@ Setting up a simulation in `biofts` is done through the following steps:
 
 ### Step 1: Define the interactions
 
-In FTS, each field corresponds to a a specific interaction in the system, so the first step is to define the interactions in the system. `biofts` currently supports Yukawa-type interactions, $V(r) = l \mathrm{e}^{- \kappa r} / r $, and contact interactions, $V(r) = \gamma^{-1} \delta(r)$. These can be defined as follows:
+In FTS, each field corresponds to a a specific interaction in the system, so the first step is to define the interactions in the system. `biofts` currently supports Yukawa-type interactions, $V(r) = l \, \mathrm{e}^{- \kappa r} / r $, and contact interactions, $V(r) = \gamma^{-1} \delta(r)$. These can be defined as follows:
 
 ```python
 
@@ -126,7 +126,7 @@ rho_bulk = 2.0 / N # rho_bulk is chain number density, n/V. Bead number density 
 # Create the polymer species
 a = 1./np.sqrt(6.) # Gaussian smearing length
 b = 1. # Kuhn length
-polye = biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=seq_label)
+biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=seq_label)
 
 ```
 
