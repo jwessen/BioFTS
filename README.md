@@ -98,7 +98,7 @@ $$
 where $b$ is the Kuhn length, $V$ is the volume of the simulation box, $\Delta R$ is the displacement between neighboring monomers along the chain and
 
 $$
-q \cdot \psi \equiv \sum{a,\alpha} q_{a,\alpha} \int \mathrm{d} \vec{r} \Gamma(\vec{R}_{\alpha} - \vec{r}) \psi_a(\vec{r})
+q \cdot \psi \equiv \sum_{a,\alpha} q_{a,\alpha} \int \mathrm{d} \vec{r} \Gamma(\vec{R}_{\alpha} - \vec{r}) \psi_a(\vec{r})
 $$
 
 The following code snippet shows how to add a single polymer species, corresponding to a linear chain of E (glutamic acid) and K (lysine) residues:
