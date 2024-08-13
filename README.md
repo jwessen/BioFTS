@@ -96,8 +96,9 @@ Q[\lbrace \psi_a \rbrace ] = \frac{1}{V} \left( \frac{3}{2 \pi b^2} \right)^{\fr
 $$
 
 where
+
 $$ 
-\sum \Delta R^2 \equiv= \sum_{\alpha=1}^{N-1} \left( \vec{R}_{\alpha+1} - \vec{R}_\alpha \right)^2 
+\sum \Delta R^2 \equiv \sum_{\alpha=1}^{N-1} 
 $$
 
 and $q_{a,\alpha}$ are the generalized charges for the polymer species. 
