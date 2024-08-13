@@ -98,7 +98,7 @@ $$
 where
 
 $$ 
-\sum \Delta R^2 \equiv \sum_{\alpha=1}^{N-1} \left( \vec{R}{}_{\alpha} - \vec{R}{}_{\alpha} \right)^2
+\sum \Delta R^2 \equiv \sum_{\alpha=1}^{N-1} \left( \vec{R}_{\alpha} - \vec{R}_{\alpha} \right)^2
 $$
 
 and $q_{a,\alpha}$ are the generalized charges for the polymer species. 
