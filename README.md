@@ -101,7 +101,7 @@ $$
 q \cdot \psi \equiv \sum_{a,\alpha} q_{a,\alpha} \int \mathrm{d} \vec{r} \Gamma(\vec{R}_{\alpha} - \vec{r}) \psi_a(\vec{r})
 $$
 
-Here, $\Gamma(\vec{r})$ is a Gaussian distribution which regulates ultraviolet divergences arising from contact interactions and self-energies. 
+Here, $\Gamma(\vec{r})$ is a Gaussian distribution which regulates ultraviolet divergences arising from contact interactions and self-energies. The quantity $q_{a,\alpha}$ is the generalized charge for the interaction type $a$ on monomer $\alpha$.
 
 The following code snippet shows how to add a single polymer species, corresponding to a linear chain of E (glutamic acid) and K (lysine) residues:
 
