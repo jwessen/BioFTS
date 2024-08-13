@@ -101,6 +101,8 @@ $$
 q \cdot \psi \equiv \sum_{a,\alpha} q_{a,\alpha} \int \mathrm{d} \vec{r} \Gamma(\vec{R}_{\alpha} - \vec{r}) \psi_a(\vec{r})
 $$
 
+Here, $\Gamma(\vec{r})$ is a Gaussian distribution regulating ultraviolet divergences in the field theory. 
+
 The following code snippet shows how to add a single polymer species, corresponding to a linear chain of E (glutamic acid) and K (lysine) residues:
 
 ```python
