@@ -92,13 +92,13 @@ Currently, `biofts` currently only supports linear bead-spring polymers where ea
 The single-molecule partition function for such a polymer species with $N$ monomers is given by
 
 $$
-Q[\lbrace \psi_a \rbrace ] = \frac{1}{V} \left( \frac{3}{2 \pi b^2} \right)^{\frac{3(N-1)}{2}} \left( \prod_{\alpha=1}^N \int \mathrm{d} \vec{R}_\alpha \right) \mathrm{e}^{ - \frac{3}{2 b^2} \sum_{\alpha} \Delta R^2 - \mathrm{i} q \cdot \psi}
+Q[\lbrace \psi_a \rbrace ] = \frac{1}{V} \left( \frac{3}{2 \pi b^2} \right)^{\frac{3(N-1)}{2}} \left( \prod_{\alpha=1}^N \int \mathrm{d} \vec{R}_\alpha \right) \mathrm{e}^{ - \frac{3}{2 b^2} \sum \Delta R^2 - \mathrm{i} q \cdot \psi}
 $$
 
 where
 
 $$ 
-\sum \Delta R^2 \equiv \sum_{\alpha=1}^{N-1} \left( \vec{R} - \vec{R}_{\alpha} \right)^2
+\sum \Delta R^2 \equiv \sum_{\alpha=1}^{N-1} \left( {\vec{R}_{\alpha}} - {\vec{R}_{\alpha}} \right)^2
 $$
 
 and $q_{a,\alpha}$ are the generalized charges for the polymer species. 
