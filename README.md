@@ -150,15 +150,20 @@ The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fi
 visualizer = biofts.Monitor_Density_Profiles_Averaged_to_1d(sb)
 
  ### Run the simulation ####
-n_steps = 1000
+n_steps = 10000
 sample_interval = 50
 cl.run_ComplexLangevin(n_steps, sample_interval=sample_interval, sampling_tasks=(visualizer,))
 ```
 
-This will show a figure that looks like this
-
+This will show a figure that looks like this:
 ![Density profile](example_snapshot.png)
+The top row shows the real part of the monomer density operator and the bottom row shows the time-evolution of the chemical potential. 
 
-where the top row shows the real part of the monomer density operator and the bottom row shows the time-evolution of the chemical potential. 
 
+### Sampling tasks
+`biofts` currently provides the following built-in sampling tasks which can be created for a given `simulation_box` object:
 
+1. `Monitor_Density_Profiles_Averaged_to_1d(simulation_box, species_to_plot=None, show_imaginary_part=False, pause_at_end=True)`: Monitors the average monomer densities along the last axis of the simulation box in real time.  The optional argument `species_to_plot` is a list of integers representing the molecular species to be shown, e.g. `species_to_plot=[0,1,3]` means that the first, second and fourth species that were added to `simulation_box` will be show (if `None`, all species are plotted). If `show_imaginary_part=True`, the imaginary part of the density operator is also plotted as dashed curves. If `pause_at_end=True`, the simulation pauses at the end of the run until the user closes the figure.
+2. `Save_Latest_Density_Profiles(simulation_box, data_directory='')`: Saves the density operators to a file `data_directory + 'density_profiles.npz`. The file is overwritten every time the task is called. You can load the densities as `rho = np.load(data_directory + 'density_profiles.npz')` where `rho[i]` will be the density operator for the $i$th species. 
+3. `Save_1d_Density_Profiles(simulation_box, data_directory='', species_to_plot=None, remove_old_data_files=False)`: This creates one file per species, `data_directory + 'density_profile_(mol id).txt'`, (where `mol id` is the name of the species). At every sampling point, a new line will be appended to the files where the first column is the current Complex-Langevin time, the second column is the step number, the third column is the real part of the chemical potential, and the remaining columns are the real part of the density operator averaged along the last axis of the simulation box. If `species_to_plot` is not `None`, only the species with indices in integer list `species_to_plot` will be saved. If `remove_old_data_files=True`, the old data files will be removed before the new data is saved.
+4. `Save_Field_Configuration(simulation_box, data_directory='', load_last_configuration=True)`: Saves the current field configuration to a file `data_directory + 'field_configuration.npy'`. If `load_last_configuration=True`, the task will load the last saved field configuration at the beginning of the simulation. This can be useful for restarting a simulation from a previous state.
