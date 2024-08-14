@@ -1,6 +1,6 @@
 # biofts
 
-This repository contains the source code for the `biofts` package which is python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling. Although the code is applicable to a large class of polymer field theories, a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates. 
+The `biofts` package is Python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling written by Jonas Wessén. The code is applicable to a large class of polymer field theories but a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates.
 
 ## Background
 
@@ -131,3 +131,34 @@ biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=seq_label)
 ```
 
 You can add any number of polymer species to the simulation box in this way. Note that variants of the $N=1$ `LinearPolymer` object can be used to represent explicit salt ions and solvent particles. 
+
+
+### Step 4: Run the simulation
+
+To run the simulation, we first need to create a `ComplexLangevin` object which takes as input the time step `dt`, the simulation box `sb`, and the integration method. For example:
+```python
+# Set-up the CL integrator
+dt = 1e-3
+cl = biofts.ComplexLangevinIntegrator(dt, sb)
+```
+
+The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method can also takes two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called evert `sample_interval` steps to e.g. compute and store observables. `biofts` provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
+
+```python
+
+# Set-up visualization task
+visualizer = biofts.Monitor_Density_Profiles_Averaged_to_1d(sb)
+
+ ### Run the simulation ####
+n_steps = 1000
+sample_interval = 50
+cl.run_ComplexLangevin(n_steps, sample_interval=sample_interval, sampling_tasks=(visualizer,))
+```
+
+This will show a figure that looks like this
+
+![Density profile](example_snapshot.png)
+
+where the top row shows the real part of the monomer density operator and the bottom row shows the time-evolution of the chemical potential. 
+
+
