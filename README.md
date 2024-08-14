@@ -190,3 +190,5 @@ class MySamplingTask:
 ```
 
 The current field configuration is retrieved from the `simulation_box` object as `self.sb.Psi` which is an `(n_fields, *grid_dimensions)` array. You can also retrieve the current number density operators as `self.sb.species[i].rhob` and the generalized charge-density operators as `self.sb.species[i].rho` where `i` is the index of the species in the simulation box. The `self.sb.species[i].rho` is an `(n_fields, *grid_dimensions)` array.
+
+To use your sampling task, simply pass add it to the tuple of sampling tasks in the `sampling_tasks` argument of the `run_ComplexLangevin` method as shown above.
