@@ -26,12 +26,11 @@ $$
 H[\lbrace\psi_a(\vec{r},t) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) 
 $$
 
-Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over monomer pairs $\alpha$ and $\beta$ of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} $
+Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over monomer pairs, denoted $\alpha$ and $\beta$, of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta} $. Here, $r_{\alpha, \beta}$ is the distance between the pair and $q_{a,\alpha}$ is a *generalized charge* of monomer $\alpha$ for interaction type $a$.
 
 [If this formalism is unfamiliar to you, please have a look at the references above.]
 
-
-The key functionality of `biofts` is to evolve the fields $\psi_a(\vec{r})$ in Complex-Langevin time $t$ using the following stochastic differential equation:
+The key functionality of BioFTS is to evolve the fields $\psi_a(\vec{r})$ in Complex-Langevin time $t$ using the following stochastic differential equation:
 
 $$
 \frac{\partial \psi_a(\vec{r},t)}{\partial t} = -\frac{\delta H}{\delta \psi_a(\vec{r},t)} + \eta_a(\vec{r},t)
