@@ -26,7 +26,7 @@ $$
 H[\lbrace\psi_a(\vec{r},t) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) 
 $$
 
-Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over monomer pairs, denoted $\alpha$ and $\beta$, of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta} $. Here, $r_{\alpha, \beta}$ is the distance between the pair and $q_{a,\alpha}$ is a *generalized charge* of monomer $\alpha$ for interaction type $a$.
+Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over all monomer pairs, denoted $\alpha$ and $\beta$, of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta} $. Here, $r_{\alpha, \beta}$ is the distance between the pair and $q_{a,\alpha}$ is a *generalized charge* of monomer $\alpha$ for interaction type $a$.
 
 [If this formalism is unfamiliar to you, please have a look at the references above.]
 
@@ -38,7 +38,7 @@ $$
 
 where $\eta_a(\vec{r},t)$ is a real-valued Gaussian noise term. This is achieved by approximating the continuous fields $\psi_a(\vec{r},t)$ as a discrete set of field variables living on the sites of a $d$-dimensional rectangular lattice, and then evolving the fields in $t$ using a finite-difference scheme. The resulting field trajectories can then be used to compute thermodynamic averages of observables of interest. 
 
-It is possible in `biofts` to set the noise term $\eta_a(\vec{r},t)$ to zero, in which case FTS reduces to self-consistent field theory (SCFT).
+It is possible in BioFTS to set the noise term $\eta_a(\vec{r},t)$ to zero, in which case FTS reduces to self-consistent field theory (SCFT).
 
 ## Quick start
 
@@ -53,7 +53,7 @@ Setting up a simulation in `biofts` is done through the following steps:
 
 ### Step 1: Define the interactions
 
-In FTS, each field corresponds to a a specific interaction in the system, so the first step is to define the interactions in the system. `biofts` currently supports Yukawa-type interactions, $V(r) = l \mbox{ } \mathrm{e}^{- \kappa r} / r $, and contact interactions, $V(r) = \gamma^{-1} \delta(r)$. These can be defined as follows:
+In FTS, each field results from a specific interaction type in the system, so the first step in setting up a BioFTS code is to define which interactions we want to include. BioFTS currently supports Yukawa-type interactions, $V(r) = l \mbox{ } \mathrm{e}^{- \kappa r} / r $, and contact interactions, $V(r) = \gamma^{-1} \delta(r)$. These can be defined as follows:
 
 ```python
 
@@ -91,7 +91,7 @@ If you have CUDA Python installed, you can use pass the argument `use_GPU=True` 
 
 ### Step 3: Add the molecular species to the simulation box
 
-Currently, `biofts` currently only supports linear bead-spring polymers where each monomer is associated with a set of generalized charges that governs its interactions with other monomers through the interactions defined in Step 1. For applications to IDPs, each monomer typically represents a residue in the protein sequence. 
+Currently, BioFTS only supports linear bead-spring polymers where each monomer is associated with a set of generalized charges that governs its interactions with other monomers through the interactions defined in Step 1. For applications to IDPs, each monomer typically represents a residue in the protein sequence. 
 
 The single-molecule partition function for such a polymer species with $N$ monomers, with positions $\vec{R}_{\alpha}$, is given by
 
