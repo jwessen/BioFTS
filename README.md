@@ -23,10 +23,12 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 BioFTS can be used to study any polymer field theory described by a Hamiltonian on the form
 
 $$
-H[\lbrace\psi_a(\vec{r},t) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) 
+H[\lbrace\psi_a(\vec{r}) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) .
 $$
 
-Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over all monomer pairs, denoted $\alpha$ and $\beta$, of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta} $. Here, $r_{\alpha, \beta}$ is the distance between the pair and $q_{a,\alpha}$ is a *generalized charge* of monomer $\alpha$ for interaction type $a$.
+Here, $\psi_a(\vec{r})$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. 
+
+In the corresponding explicit particle representation of the system, the non-bonded interaction energy is the sum over all monomer pairs, denoted $\alpha$ and $\beta$, of $\sum_a V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta} $. Here, $r_{\alpha, \beta}$ is the distance between the pair and $q_{a,\alpha}$ is a *generalized charge* of monomer $\alpha$ for interaction type $a$. The generalized charges can be real or imaginary depending on the nature of the interaction type. 
 
 [If this formalism is unfamiliar to you, please have a look at the references above.]
 
@@ -49,7 +51,7 @@ import biofts
 import numpy as np
 ```
 
-Setting up a simulation in `biofts` is done through the following steps:
+Setting up a simulation in BioFTS is done through the following steps:
 
 ### Step 1: Define the interactions
 
@@ -62,11 +64,11 @@ v = 0.0068
 excluded_volume = biofts.Contact(1./v)
 
 # (Un-screened) Electrostatics
-lB = 2.
-kappa = 0.0
+lB = 2.      # Bjerrum length, lB = e^2 / (4 pi epsilon k_B T) in model units
+kappa = 0.0  # Inverse Debye screening length
 electrostatics = biofts.Yukawa(lB,kappa)
 
-# Collect all interactions in a tuple
+# Collect all interactions in a tuple. This will be used in step 2 to create the simulation box.
 interactions = (excluded_volume,electrostatics)
 ```
 
@@ -134,7 +136,7 @@ biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=seq_label)
 
 ```
 
-You can add any number of polymer species to the simulation box in this way. Note that variants of the $N=1$ `LinearPolymer` object can be used to represent explicit salt ions and solvent particles. 
+You can add any number of polymer species to the simulation box in this way. Note that $N=1$ variants of the `LinearPolymer` object can be used to represent explicit salt ions and solvent particles. 
 
 For species in the grand canonical ensemble, you can supply the argument `is_canonical=False` to the `LinearPolymer` constructor. In this case, the `rho_bulk` argument is interpreted as the activity of the species (i.e. the exponential of the chemical potential).
 
@@ -150,7 +152,7 @@ cl = biofts.ComplexLangevinIntegrator(dt, sb)
 
 For self-consistent field theory (SCFT), you can set the noise to zero by passing the additional argument `noise=0` to the `ComplexLangevinIntegrator` constructor.
 
-The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method can also takes two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called evert `sample_interval` steps to e.g. compute and store observables. `biofts` provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
+The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method can also takes two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called every `sample_interval` steps to e.g. compute and store observables. BioFTS provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
 
 ```python
 
@@ -168,10 +170,10 @@ This will show a figure that looks like this:
 The top row shows the real part of the monomer density operator and the bottom row shows the time-evolution of the chemical potential. 
 
 
-### Sampling tasks
-`biofts` currently provides the following built-in sampling tasks which can be created for a given `simulation_box` object:
+## Sampling tasks
+BioFTS currently provides the following built-in sampling tasks which can be created for a given `simulation_box` object:
 
-1. `Monitor_Density_Profiles_Averaged_to_1d(simulation_box, species_to_plot=None, show_imaginary_part=False, pause_at_end=True)`: Monitors the average monomer densities along the last axis of the simulation box in real time.  The optional argument `species_to_plot` is a list of integers representing the molecular species to be shown, e.g. `species_to_plot=[0,1,3]` means that the first, second and fourth species that were added to `simulation_box` will be show (if `None`, all species are plotted). If `show_imaginary_part=True`, the imaginary part of the density operator is also plotted as dashed curves. If `pause_at_end=True`, the simulation pauses at the end of the run until the user closes the figure.
+1. `Monitor_Density_Profiles_Averaged_to_1d(simulation_box, species_to_plot=None, show_imaginary_part=False, pause_at_end=True)`: Monitors the average monomer densities along the last axis of the simulation box in real time.  The optional argument `species_to_plot` is a list of integers representing the molecular species to be shown, e.g. `species_to_plot=[0,1,3]` means that the first, second and fourth species that were added to `simulation_box` will be show (if `None`, all species are plotted). If `show_imaginary_part=True`, the imaginary part of the density operator is also plotted as dashed curves. If `pause_at_end=True`, the simulation pauses at the end of the run until the user closes the figure window.
 2. `Save_Latest_Density_Profiles(simulation_box, data_directory='')`: Saves the density operators to a file `data_directory + 'density_profiles.npz`. The file is overwritten every time the task is called. You can load the densities as `rho = np.load(data_directory + 'density_profiles.npz')` where `rho[i]` will be the density operator for the $i$th species. 
 3. `Save_1d_Density_Profiles(simulation_box, data_directory='', species_to_plot=None, remove_old_data_files=False)`: This creates one file per species, `data_directory + 'density_profile_(mol id).txt'`, (where `mol id` is the name of the species). At every sampling point, a new line will be appended to the files where the first column is the current Complex-Langevin time, the second column is the step number, the third column is the real part of the chemical potential, and the remaining columns are the real part of the density operator averaged along the last axis of the simulation box. If `species_to_plot` is not `None`, only the species with indices in integer list `species_to_plot` will be saved. If `remove_old_data_files=True`, the old data files will be removed before the new data is saved.
 4. `Save_Field_Configuration(simulation_box, data_directory='', load_last_configuration=True)`: Saves the current field configuration to a file `data_directory + 'field_configuration.npy'`. If `load_last_configuration=True`, the task will load the last saved field configuration at the beginning of the simulation. This can be useful for restarting a simulation from a previous state.
