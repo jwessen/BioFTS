@@ -1,6 +1,6 @@
-# biofts
+# BioFTS
 
-The `biofts` package is Python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling written by Jonas Wessén. The code is applicable to a large class of polymer field theories but a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates.
+The BioFTS package is Python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling written by Jonas Wessén. The code is applicable to a large class of polymer field theories but a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates.
 
 ## Background
 
@@ -20,13 +20,21 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 
 ## Overview
 
-`biofts` can be used to study any polymer field theory described by a Hamiltonian on the form
+BioFTS can be used to study any polymer field theory described by a Hamiltonian on the form
 
 $$
 H[\lbrace\psi_a(\vec{r},t) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) 
 $$
 
 Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. [If this formalism is unfamiliar to you, please have a look at the references above.]
+
+The interaction potentials $V_a(r)$ govern the pairwise non-bonded interactions between the monomers in the system, which, in the corresponding particle-picture, are represented by an Hamiltonian of the form
+
+$$
+\hat{H}_{\rm int.} = \frac{1}{2} \sum_{\alpha,\beta} \sum_{a} V_a(|\vec{R}_{\alpha} - \vec{R}_{\beta}|) q_{a,\alpha} q_{a,\beta}
+$$
+
+where the sums over $\alpha$ and $\beta$ run over all monomers in the system, $\vec{R}_{\alpha}$ is the position of monomer $\alpha$, $q_{a,\alpha}$ is a generalized charge for interaction type $a$ on monomer $\alpha$. 
 
 The key functionality of `biofts` is to evolve the fields $\psi_a(\vec{r})$ in Complex-Langevin time $t$ using the following stochastic differential equation:
 
