@@ -152,7 +152,9 @@ cl = biofts.ComplexLangevinIntegrator(dt, sb)
 
 For self-consistent field theory (SCFT), you can set the noise to zero by passing the additional argument `noise=0` to the `ComplexLangevinIntegrator` constructor.
 
-The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method can also takes two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called every `sample_interval` steps to e.g. compute and store observables. BioFTS provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
+The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method has two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called every `sample_interval` steps to e.g. compute and store observables. 
+
+BioFTS provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
 
 ```python
 
@@ -167,8 +169,7 @@ cl.run_ComplexLangevin(n_steps, sample_interval=sample_interval, sampling_tasks=
 
 This will show a figure that looks like this:
 ![Density profile](example_snapshot.png)
-The top row shows the real part of the monomer density operator and the bottom row shows the time-evolution of the chemical potential. 
-
+The top panel shows the density profile, i.e. the average monomer density along the last spatial coordinate $z$ of the simulation box. The bottom panel shows the time-evolution of the chemical potential.
 
 ## Sampling tasks
 BioFTS currently provides the following built-in sampling tasks which can be created for a given `simulation_box` object:
