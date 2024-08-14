@@ -85,6 +85,8 @@ sb = biofts.SimulationBox(grid_dimensions,side_lengths,interactions)
 
 ```
 
+If you have CUDA Python installed, you can use pass the argument `use_GPU=True` to the `SimulationBox` constructor to use the GPU to speed up the Complex-Langevin sampling.
+
 ### Step 3: Add the molecular species to the simulation box
 
 Currently, `biofts` currently only supports linear bead-spring polymers where each monomer is associated with a set of generalized charges that governs its interactions with other monomers through the interactions defined in Step 1. For applications to IDPs, each monomer typically represents a residue in the protein sequence. 
@@ -167,3 +169,24 @@ The top row shows the real part of the monomer density operator and the bottom r
 2. `Save_Latest_Density_Profiles(simulation_box, data_directory='')`: Saves the density operators to a file `data_directory + 'density_profiles.npz`. The file is overwritten every time the task is called. You can load the densities as `rho = np.load(data_directory + 'density_profiles.npz')` where `rho[i]` will be the density operator for the $i$th species. 
 3. `Save_1d_Density_Profiles(simulation_box, data_directory='', species_to_plot=None, remove_old_data_files=False)`: This creates one file per species, `data_directory + 'density_profile_(mol id).txt'`, (where `mol id` is the name of the species). At every sampling point, a new line will be appended to the files where the first column is the current Complex-Langevin time, the second column is the step number, the third column is the real part of the chemical potential, and the remaining columns are the real part of the density operator averaged along the last axis of the simulation box. If `species_to_plot` is not `None`, only the species with indices in integer list `species_to_plot` will be saved. If `remove_old_data_files=True`, the old data files will be removed before the new data is saved.
 4. `Save_Field_Configuration(simulation_box, data_directory='', load_last_configuration=True)`: Saves the current field configuration to a file `data_directory + 'field_configuration.npy'`. If `load_last_configuration=True`, the task will load the last saved field configuration at the beginning of the simulation. This can be useful for restarting a simulation from a previous state.
+
+However, you will likely want to create your own sampling tasks to analyze the data and store the results relevant to your specific research question. To do this, you can use the following template class:
+
+```python
+class MySamplingTask:
+    def __init__(self, simulation_box, ...):
+        self.sb = simulation_box
+        # Initialize any variables you need here
+
+    def sample(self, sample_index):
+        # This method is called every time the task is sampled
+        # Compute and store any observables you need here
+        pass
+
+    def finalize(self):
+        # This method is called at the end of the simulation
+        pass
+
+```
+
+The current field configuration is retrieved from the `simulation_box` object as `self.sb.Psi` which is an `(n_fields, *grid_dimensions)` array. You can also retrieve the current number density operators as `self.sb.species[i].rhob` and the generalized charge-density operators as `self.sb.species[i].rho` where `i` is the index of the species in the simulation box. The `self.sb.species[i].rho` is an `(n_fields, *grid_dimensions)` array.
