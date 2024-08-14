@@ -155,7 +155,7 @@ The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fi
 # Set-up visualization task
 visualizer = biofts.Monitor_Density_Profiles_Averaged_to_1d(sb)
 
- ### Run the simulation ####
+# Run the simulation
 n_steps = 10000
 sample_interval = 50
 cl.run_ComplexLangevin(n_steps, sample_interval=sample_interval, sampling_tasks=(visualizer,))
