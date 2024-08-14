@@ -31,7 +31,7 @@ Here, $\psi_a(\vec{r},t)$ is a field that decouples interactions of type $a$, i.
 The interaction potentials $V_a(r)$ govern the pairwise non-bonded interactions between the monomers in the system, which, in the corresponding particle-picture, are represented by an Hamiltonian of the form
 
 $$
-\hat{H}_{\rm int.} = \frac{1}{2} \sum_{\alpha,\beta} \sum_{a} V_a(r_{\alpha,\beta}) q_{a,\alpha} q_{a,\beta}
+\hat{H}_{\rm int.} = \frac{1}{2} \sum_{\alpha,\beta}
 $$
 
 where the sums over $\alpha$ and $\beta$ run over all monomers in the system, $\vec{R}_{\alpha}$ is the position of monomer $\alpha$, $q_{a,\alpha}$ is a generalized charge for interaction type $a$ on monomer $\alpha$. 
