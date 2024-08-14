@@ -32,6 +32,7 @@ The interaction potentials $V_a(r)$ govern the pairwise non-bonded interactions 
 
 $$
 \hat{H}_{\rm int.} = \frac{1}{2} \sum_{\alpha}
+$$
 
 where the sums over $\alpha$ and $\beta$ run over all monomers in the system, $\vec{R}_{\alpha}$ is the position of monomer $\alpha$, $q_{a,\alpha}$ is a generalized charge for interaction type $a$ on monomer $\alpha$. 
 
