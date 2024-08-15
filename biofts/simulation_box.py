@@ -59,7 +59,7 @@ class SimulationBox:
         #self.field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
         #self.field_shape = tuple( np.concatenate((np.array([self.Nint]), np.asarray(self.grid_dimensions))) )
         self.field_shape = (self.Nint,) + self.grid_dimensions
-        print("field_shape:",self.field_shape)
+        #print("field_shape:",self.field_shape)
 
         # All fields
         self.Psi = np.zeros(self.field_shape,dtype=complex)
@@ -83,12 +83,15 @@ class SimulationBox:
         
         G0_MFT = self.np.array([ I.V_inverse( self.np.array([0]) ) for I in self.interactions], dtype=float)[:,0]
         
-        rho_bulks = np.array([ molecule.rho_bulk for molecule in self.species ])
+        rho_bulks = self.np.array([ molecule.rho_bulk for molecule in self.species ])
         for I in range(self.Nint):
             if G0_MFT[I] != 0:
-                qs = self.np.array([ np.sum(molecule.q[I]) for molecule in self.species] )
+                qs = self.np.array([ self.np.sum(molecule.q[I]) for molecule in self.species] )
                 rho = self.np.sum( rho_bulks * qs )
                 self.Psi[I] -= 1j * rho / G0_MFT[I]
+
+        for molecule in self.species:
+            molecule.calc_densities()
     
 
 if __name__ == "__main__":

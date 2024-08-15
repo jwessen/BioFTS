@@ -136,7 +136,7 @@ if __name__ == "__main__":
         return rho
 
 
-    ##### Set-up simulation box ######
+    ##### Set-up simulation box ###### 
     # Compressibility
     gamma = 0.5
     compr = int_pot.Contact(gamma)

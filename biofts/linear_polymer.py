@@ -18,7 +18,7 @@ class LinearPolymer:
             self.a = a                       # Smearing length
             self.b = b                       # Kuhn Length
             self.is_canonical = is_canonical # True if canonical ensemble, False if grand-canonical ensemble
-            self.rho_bulk = rho_bulk         # Molecule number density (n_i/V) for canonical ensemble, activity parameter 
+            self.rho_bulk = rho_bulk         # Molecule number density (n_i/V) for canonical ensemble, activity parameter for grand-canonical ensemble
             self.molecule_id = molecule_id   # Identifier for this molecule
         
             self.Nint = len(q)     # Number of interactions
@@ -140,7 +140,18 @@ class LinearPolymer:
 
         return g * self.rho_bulk
     
-    
+    # Calculates the residue-specific densities rho_residue with shape (N,Nx,Ny,Nz,...) for the current field configuration in simulation_box
+    def calc_residue_specific_densities(self):
+        np = self.np
+
+        Psi_s = np.asarray( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
+        W = 1j * np.einsum('Ia,I...->a...',self.q, Psi_s)
+
+        qs = self.qF * self.qB * np.exp(W)
+
+        rho_residue = self.rho_bulk * qs / self.Q
+        return rho_residue
+
 
 if __name__ == "__main__":
     import simulation_box as sim_box

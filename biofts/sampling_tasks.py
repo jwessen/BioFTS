@@ -15,13 +15,13 @@ class SamplingTask(ABC):
 
 # Visualizer for d-dimensional density profiles. Shows 1d density profile over the last dimension, averaged over the other dimensions.
 class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
-    def __init__(self, simulation_box, species_to_plot=None, show_imaginary_part=False):
+    def __init__(self, simulation_box, species_to_plot=None, show_imaginary_part=False,pause_at_end=True):
         import matplotlib.pyplot as plt
         self.np = simulation_box.np
 
         self.plt = plt
-        
         self.simulation_box = simulation_box
+        self.pause_at_end = pause_at_end
 
         if species_to_plot is None:
             #self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
@@ -81,21 +81,6 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         z = np.linspace(0,self.simulation_box.side_lengths[-1],self.simulation_box.grid_dimensions[-1])
 
         # Visualize current field configuration
-        
-        # self.ax.clear()
-        # for j in range(len(rho)):
-        #     clr = 'C'+str(j)
-        #     self.ax.plot(z,rho[j].real,'-' ,color=clr,label=self.simulation_box.species[j].molecule_id)
-        #     if self.show_imaginary_part:
-        #         self.ax.plot(z,rho[j].imag,'--',color=clr)
-        
-        # self.ax.set_xlabel(r'$z$')
-        # self.ax.set_ylabel(r'$\rho(z)$')
-        # self.ax.legend(loc='upper right')
-
-        # title = "i=" + str(sample_index) + ", t=" + str(np.round(self.simulation_box.t,decimals=5))
-        # self.ax.set_title(title)
-
         ax = self.axes[0]
         ax.clear()
         for j in range(len(rho)):
@@ -119,7 +104,6 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
             ax.plot(self.t,np.array(self.mu[i]).real,'-',color=clr,label=self.simulation_box.species[s].molecule_id)
             if self.show_imaginary_part:
                 ax.plot(self.t,np.array(self.mu[i]).imag,'--',color=clr)
-        #ax.plot(self.t,self.mu,'-')
         ax.set_xlabel(r'$t$')
         ax.set_ylabel(r'$\mu$')
 
@@ -127,10 +111,40 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         self.plt.pause(0.01)
         
     def finalize(self):
-        # Turn of interactive mode and keep plot open
-        self.plt.ioff()
-        self.plt.show()
-        self.plt.close()
+        if self.pause_at_end:
+            # Turn of interactive mode and keep plot open
+            self.plt.ioff()
+            self.plt.show()
+            self.plt.close()
+        else:
+            # Close plot
+            self.plt.close()
+
+# Store the full number density arrays to a binary file
+class Save_Latest_Density_Profiles(SamplingTask):
+    def __init__(self, simulation_box, data_directory=''):
+        
+        self.simulation_box = simulation_box
+        #self.np = simulation_box.np
+        import numpy as np
+        self.np = np
+
+        self.filename = data_directory + 'density_profiles.npz'
+
+    # Save the field configuration (Psi) and the time (t) to file
+    def sample(self,sample_index):
+        np = self.np
+        if self.simulation_box.use_GPU:
+            rho = [ species.rhob.get() for species in self.simulation_box.species ]
+        else:
+            rho = [ species.rhob for species in self.simulation_box.species ]
+        
+        # Overwrite the latest field configuration to file
+        np.savez(self.filename, rho=rho)
+
+    # Do nothing
+    def finalize(self):
+        pass
 
 
 # Save density profiles to file
@@ -186,7 +200,6 @@ class Save_1d_Density_Profiles(SamplingTask):
 class Save_Field_Configuration(SamplingTask):
 
     def __init__(self, simulation_box, data_directory='', load_last_configuration=True):
-        import h5py
 
         self.simulation_box = simulation_box
         #self.np = simulation_box.np
@@ -232,6 +245,8 @@ class Save_Field_Configuration(SamplingTask):
     # Do nothing
     def finalize(self):
         pass
+
+
 
 # Store simulation trajectory using the h5py package
 class Save_Trajectory(SamplingTask):
