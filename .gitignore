@@ -1,3 +1,5 @@
 .vscode/
 __pycache__/
 .DS_Store
+biofts/interaction_matrices
+biofts/interaction_scale_functions.py
