@@ -83,18 +83,18 @@ aa_sequence = seqs[mol_id]
 N = len(aa_sequence)
 q = np.zeros( (sb.Nint,N) ) # Generalized charges
 
-# The generalized charge for exluded volume interactions corresponds to relative size
+# The generalized charge for excluded volume interactions corresponds to relative size
 q[0,:] += 1.
 
 # Electric charges
 q[1,:] = [ aa_charges[aa] for aa in aa_sequence ]
 
 # Chain density
-rho_bulk = 2.0 / N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
+rho_bulk = 2. / N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
 
 # Create the polymer species
 a = b/np.sqrt(6.) # Gaussian smearing length
-biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=mol_id)
+biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=mol_id, is_canonical=True)
 
 ### Step 4: Set-up Complex Langevin integrator and sampling tasks ####
 dt = 1e-3
@@ -112,7 +112,7 @@ save_densities = biofts.Save_Latest_Density_Profiles(sb, data_directory=output_d
 sampling_tasks = (visualizer, save_fields, save_densities)
 
 ### Step 5: Run the simulation ####
-n_steps = 3000+1
+n_steps = 1000+1
 sample_interval = 50
 
 cl.run_ComplexLangevin(n_steps, sample_interval, sampling_tasks=sampling_tasks )

@@ -77,12 +77,23 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         for j in range(len(rho)):
             rho[j] = np.roll(rho[j], shift)
 
+        if self.show_imaginary_part:
+            rho_max = np.max([ np.max(rho.real), np.max(rho.imag) ])
+            rho_min = np.min([ np.min(rho.real), np.min(rho.imag) ])
+        else:
+            rho_max = np.max(rho.real)
+            rho_min = np.min(rho.real)
+        
+        rho_lim = [ np.min([0,rho_min])*0.9, rho_max*1.1 ]
+
         # z-coordinate
         z = np.linspace(0,self.simulation_box.side_lengths[-1],self.simulation_box.grid_dimensions[-1])
 
         # Visualize current field configuration
         ax = self.axes[0]
         ax.clear()
+        ax.set_ylim(rho_lim)
+
         for j in range(len(rho)):
             clr = 'C'+str(j)
             ax.plot(z,rho[j].real,'-' ,color=clr,label=self.simulation_box.species[j].molecule_id)
