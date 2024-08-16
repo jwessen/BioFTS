@@ -25,7 +25,7 @@ import matplotlib.colors as mcolors
 
 #### Load data ####
 if len(sys.argv) < 2:
-    file_path = 'data/example_1/density_profiles.npz'
+    file_path = 'data/example_model_1/density_profiles.npz'
 else:
     file_path = sys.argv[1]
 
@@ -34,12 +34,12 @@ file = np.load(file_path)
 # Load all density profiles in the file
 all_labels = file['labels']
 all_rho    = file['rho']
-all_rho   = [ rho.real for rho in all_rho ] # Remove imaginary part
+all_rho    = [ rho.real for rho in all_rho ] # Remove imaginary part
 
 for i in range(len(all_labels)):
     rho = all_rho[i]
     label = all_labels[i]
-    color = tuple( np.array( mcolors.to_rgb( 'C'+str(i) ) ) )
+    color = tuple( np.array( mcolors.to_rgb( 'C'+str(i) ) )**(0.5) )
 
     vmax = np.mean(rho) * 2
     vmin = 0
@@ -49,6 +49,6 @@ for i in range(len(all_labels)):
     mlab.pipeline.volume(src, color=color,vmin=vmin,vmax=vmax)
     mlab.outline(color=(1,1,1), line_width=2)
 
-    mlab.title(label,size=1.)
+    mlab.title(label,size=1.,color=color)
     mlab.show()
 
