@@ -138,9 +138,12 @@ class Save_Latest_Density_Profiles(SamplingTask):
             rho = [ species.rhob.get() for species in self.simulation_box.species ]
         else:
             rho = [ species.rhob for species in self.simulation_box.species ]
+
+        # Species names
+        labels = [ species.molecule_id for species in self.simulation_box.species ]
         
         # Overwrite the latest field configuration to file
-        np.savez(self.filename, rho=rho)
+        np.savez(self.filename, rho=rho, labels=labels)
 
     # Do nothing
     def finalize(self):

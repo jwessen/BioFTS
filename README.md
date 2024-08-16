@@ -115,7 +115,7 @@ The following code snippet shows how to add a single polymer species, correspond
 
 aa_sequence = 'EKKKKKKEEKKKEEEEEKKKEEEKKKEKKEEKEKEEKEKKEKKEEKEEEE' # Amino-acid sequence
 mol_id = 'sv10' # Name of the polymer species
-N = len(seq) # Number of monomers in the chain
+N = len(aa_sequence) # Number of monomers in the chain
 
 q = np.zeros( (2,N) ) # Generalized charges. The first index refers to interaction type, the second to monomer index.
 
@@ -124,7 +124,7 @@ q[0,:] += 1. # The generalized charge for the excluded volume interaction is the
 
 # Electrostatic interactions
 aa_charges = {'E':-1,'K':1} # Electric charges for each amino acid type
-q[1,:] = [ charge_seq[aa] for aa in aa_sequence ]
+q[1,:] = [ aa_charges[aa] for aa in aa_sequence ]
 
 # Chain density
 rho_bulk = 2.0 / N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
@@ -152,7 +152,7 @@ cl = biofts.ComplexLangevinIntegrator(dt, sb)
 
 For self-consistent field theory (SCFT), you can set the noise to zero by passing the additional argument `noise=0` to the `ComplexLangevinIntegrator` constructor.
 
-The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method has two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple of functions that are called every `sample_interval` steps to e.g. compute and store observables. 
+The `cl` object has a method `run_ComplexLangevin(n_steps)` which evolves the fields in the simulation box for `n_steps` time steps using a semi-implicit integration scheme. This method has two optional arguments `sample_interval` and `sampling_tasks`. The `sampling_tasks` argument is a tuple where every elements represents an action to be taken at every `sample_interval` steps. This can be used to e.g. compute and store observables.
 
 BioFTS provides a number of built-in sampling tasks that can be used for this purpose. For example, the `Monitor_Density_Profiles_Averaged_to_1d` creates a `matplotlib` figure that visualizes the average monomer densities (for all molecule species in the system) along the last axis of the simulation box in real time. The figure is updated every `sample_interval` steps. The following code snippet shows how to set up this task:
 
@@ -179,7 +179,7 @@ BioFTS currently provides the following built-in sampling tasks which can be cre
 3. `Save_1d_Density_Profiles(simulation_box, data_directory='', species_to_plot=None, remove_old_data_files=False)`: This creates one file per species, `data_directory + 'density_profile_(mol id).txt'`, (where `mol id` is the name of the species). At every sampling point, a new line will be appended to the files where the first column is the current Complex-Langevin time, the second column is the step number, the third column is the real part of the chemical potential, and the remaining columns are the real part of the density operator averaged along the last axis of the simulation box. If `species_to_plot` is not `None`, only the species with indices in integer list `species_to_plot` will be saved. If `remove_old_data_files=True`, the old data files will be removed before the new data is saved.
 4. `Save_Field_Configuration(simulation_box, data_directory='', load_last_configuration=True)`: Saves the current field configuration to a file `data_directory + 'field_configuration.npy'`. If `load_last_configuration=True`, the task will load the last saved field configuration at the beginning of the simulation. This can be useful for restarting a simulation from a previous state.
 
-However, you will likely want to create your own sampling tasks to analyze the data and store the results relevant to your specific research question. To do this, you can use the following template class:
+You will likely want to create your own sampling tasks to analyze the data and store the results relevant to your specific model and research question. To do this, you can use the following template class:
 
 ```python
 class MySamplingTask:
