@@ -148,7 +148,19 @@ class LinearPolymer:
 
         rho_residue = self.rho_bulk * qs / self.Q
         return rho_residue
+    
+    def chemical_potential(self):
+        np = self.np
 
+        if self.is_canonical:
+            mu = np.log(self.rho_bulk) - np.log(self.Q)
+            return mu
+        else:
+            # Grand-canonical ensemble: Return instantaneous bulk density
+            rho_bulk_out = self.rho_bulk * self.Q
+            rho_p_av = np.mean(self.rhob) / self.N
+            print("rho_bulk_out = ",rho_bulk_out, "rho_p_av = ",rho_p_av)
+            return self.rho_bulk * self.Q
 
 if __name__ == "__main__":
     import simulation_box as sim_box
