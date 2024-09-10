@@ -143,7 +143,7 @@ For species in the grand canonical ensemble, you can supply the argument `is_can
 
 ### Step 4: Run the simulation
 
-To run the simulation, we first need to create a `ComplexLangevin` object which takes as input the time step `dt`, the simulation box `sb`, and the integration method. For example:
+To run the simulation, we first need to create a `ComplexLangevin` object which takes as input the time step `dt` and the simulation box `sb`. For example:
 ```python
 # Set-up the CL integrator
 dt = 1e-3
