@@ -11,6 +11,7 @@ class SimulationBox:
         else:
             import numpy as np
             self.np = np
+            self.np.random.seed()
 
         self.grid_dimensions = tuple(grid_dimensions) #np.array([gd for gd in grid_dimensions],dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
         #print("grid_dimensions:",self.grid_dimensions)

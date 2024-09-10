@@ -157,9 +157,9 @@ class LinearPolymer:
             return mu
         else:
             # Grand-canonical ensemble: Return instantaneous bulk density
-            rho_bulk_out = self.rho_bulk * self.Q
-            rho_p_av = np.mean(self.rhob) / self.N
-            print("rho_bulk_out = ",rho_bulk_out, "rho_p_av = ",rho_p_av)
+            # rho_bulk_out = self.rho_bulk * self.Q
+            # rho_p_av = np.mean(self.rhob) / self.N
+            # print("rho_bulk_out = ",rho_bulk_out, "rho_p_av = ",rho_p_av)
             return self.rho_bulk * self.Q
 
 if __name__ == "__main__":

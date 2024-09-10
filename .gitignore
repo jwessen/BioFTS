@@ -5,3 +5,4 @@ biofts/interaction_matrices
 biofts/interaction_scale_functions.py
 data/
 example_model_2_HP.py
+polyampholyte_cluster.py
