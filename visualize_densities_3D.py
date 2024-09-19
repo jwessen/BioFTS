@@ -18,10 +18,12 @@ The script should run after installing Mayavi and related dependencies as
 Please consult the Mayavi documentation if any issues arise: https://docs.enthought.com/mayavi/mayavi/
 '''
 
+print("Loading Mayavi...")
 from mayavi import mlab
 import numpy as np
 import sys
 import matplotlib.colors as mcolors
+print("   Done!")
 
 #### Load data ####
 if len(sys.argv) < 2:
