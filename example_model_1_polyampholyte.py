@@ -5,7 +5,7 @@ polyampholyte solution in implicit solvent. The model is described in
 McCarty et al. J. Phys. Chem. Lett. 2019, 10, 1644−1652.
 
 The script shows how to
-1. define exluded volume- and electrostatic interactions
+1. define excluded volume- and electrostatic interactions
 2. create a simulation box
 3. add a polymer species to the simulation box
 4. set-up a Complex Langevin integrator and sampling tasks
@@ -53,6 +53,7 @@ seqs['sv29'] = 'KEEEEKEEEEEEEEEEEEEEEEEEEEEKKKKKKKKKKKKKKKKKKKKKKK'
 seqs['sv30'] = 'EEEEEEEEEEEEEEEEEEEEEEEEEKKKKKKKKKKKKKKKKKKKKKKKKK'
 
 aa_charges = {'E':-1,'K':1}        # Electric charges for each amino acid type
+
 b = 1.                             # Kuhn length, base unit for length scale
 output_dir = 'data/example_model_1/'     # Output directory (will be created if it does not exist)
 if not os.path.exists(output_dir):
@@ -90,7 +91,7 @@ q[0,:] += 1.
 q[1,:] = [ aa_charges[aa] for aa in aa_sequence ]
 
 # Chain density
-rho_bulk = 2. / N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
+rho_bulk = 2./N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
 
 # Create the polymer species
 a = b/np.sqrt(6.) # Gaussian smearing length
@@ -98,7 +99,7 @@ biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=mol_id, is_canonical=True)
 
 ### Step 4: Set-up Complex Langevin integrator and sampling tasks ####
 dt = 1e-3
-cl = biofts.ComplexLangevinIntegrator(dt, sb, method='semi-implicit', noise=1)
+cl = biofts.ComplexLangevinIntegrator(dt, sb, method='semi-implicit')
 
 # Visualization task for monitoring density profiles
 visualizer = biofts.Monitor_Density_Profiles_Averaged_to_1d(sb, show_imaginary_part=False)
@@ -112,8 +113,8 @@ save_densities = biofts.Save_Latest_Density_Profiles(sb, data_directory=output_d
 sampling_tasks = (visualizer, save_fields, save_densities)
 
 ### Step 5: Run the simulation ####
-n_steps = 1000+1
-sample_interval = 50
+n_steps = 3000+1
+sample_interval = 10
 
 cl.run_ComplexLangevin(n_steps, sample_interval, sampling_tasks=sampling_tasks )
 
