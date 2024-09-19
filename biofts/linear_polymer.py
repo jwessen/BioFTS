@@ -128,7 +128,6 @@ class LinearPolymer:
 
         if self.is_canonical:
             idx = tuple( [0 for _ in range(len(self.grid_dimensions))] )
-            print(g[idx])
             g[ idx ] *= 0
 
         return g * self.rho_bulk
