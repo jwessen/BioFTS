@@ -44,14 +44,10 @@ class LinearPolymer:
             self.Phi     = np.exp(-self.k2*self.b**2/6.) # Gaussian chain n.n propagator
 
             self.Q = 1. + 0j  # Single molecule partition function
-            #propagator_shape = np.insert(self.grid_dimensions, 0, self.N)
-            #propagator_shape = np.concatenate((np.array([self.N]), np.asarray(self.grid_dimensions)))
             propagator_shape = (self.N,) + self.grid_dimensions
             self.qF = np.zeros( propagator_shape , dtype=complex )
             self.qB = np.zeros( propagator_shape , dtype=complex )
 
-            #density_shape = np.insert(self.grid_dimensions, 0, self.Nint)
-            #density_shape = np.concatenate((np.array([self.Nint]), np.asarray(self.grid_dimensions)))
             density_shape = (self.Nint,) + self.grid_dimensions
             self.rho = np.zeros( density_shape , dtype=complex )   # self.rho[I,x,y,z] is type-I charge density at point (x,y,z)
 
@@ -67,14 +63,12 @@ class LinearPolymer:
         if np.any( np.isnan(self.simulation_box.Psi) ):
             ValueError("LinearPolymer: NaNs detected in self.simulation_box.Psi.")
 
-        # Calculate propagators from fluctuations about the mean. Density operators for canonical ensemble species are unchanged. 
+        # Calculate propagators from fluctuations about the mean. 
         Psi_s = np.asarray( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
-        #Psi_s = [ self.ift( self.Gamma*self.ft( Psi ) ) for Psi in self.simulation_box.Psi ] 
 
         if np.any( np.isnan(Psi_s) ):
             ValueError("LinearPolymer: NaNs detected in Psi_s.")
 
-        #W =  1j*self.q.T.dot( Psi_s )
         W = 1j * np.einsum('Ia,I...->a...',self.q, Psi_s)
 
         if np.any( np.isnan(W) ):
@@ -110,8 +104,9 @@ class LinearPolymer:
             self.rhob /= self.Q
 
         av_Psi = np.array([ np.mean(Psi) for Psi in self.simulation_box.Psi ])
+        
         exp_av_W = np.exp( -1j * np.sum( av_Psi.dot(self.q) ) )
-        if np.isnan(self.Q):
+        if np.isnan(exp_av_W):
             ValueError("LinearPolymer: exp_av_W is NaN.")
         self.Q *= exp_av_W
 
@@ -128,12 +123,13 @@ class LinearPolymer:
 
         res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
         connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
-        connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, self.Gamma)
+        connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, self.Gamma**2)
         g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
-        #g = np.einsum( 'Ia,Jb,ab...->IJ...', self.q, self.q, connection_tensor )
 
         if self.is_canonical:
-            g[ tuple( self.simulation_box.grid_dimensions * 0 ) ] *= 0
+            idx = tuple( [0 for _ in range(len(self.grid_dimensions))] )
+            print(g[idx])
+            g[ idx ] *= 0
 
         return g * self.rho_bulk
     
@@ -146,21 +142,28 @@ class LinearPolymer:
 
         qs = self.qF * self.qB * np.exp(W)
 
-        rho_residue = self.rho_bulk * qs / self.Q
+        rho_residue = self.rho_bulk * qs 
+        if self.is_canonical:
+            rho_residue = rho_residue / self.Q
+        else:
+            ValueError("LinearPolymer: calc_residue_specific_densities() is not implemented for grand-canonical ensemble.")
+
         return rho_residue
     
     def chemical_potential(self):
+        '''
+        Returns the chemical potential of the polymer species in the simulation box.
+        If the species is in the grand-canonical ensemble, the function instead returns
+        the instantaneous chain bulk density of the species.
+        '''
+
         np = self.np
 
         if self.is_canonical:
             mu = np.log(self.rho_bulk) - np.log(self.Q)
             return mu
         else:
-            # Grand-canonical ensemble: Return instantaneous bulk density
-            # rho_bulk_out = self.rho_bulk * self.Q
-            # rho_p_av = np.mean(self.rhob) / self.N
-            # print("rho_bulk_out = ",rho_bulk_out, "rho_p_av = ",rho_p_av)
-            return self.rho_bulk * self.Q
+            return self.rho_bulk * self.Q # Instantaneous chain bulk density. rho_bulk is the activity parameter.
 
 if __name__ == "__main__":
     import simulation_box as sim_box

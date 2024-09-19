@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class InteractionPotential(ABC):
 
     @abstractmethod 
-    def V_inverse(self,k2): # Returnes the ( Fourier transformed potential )^(-1) as function of k^2
+    def V_inverse(self,k2): # Returns the ( Fourier transformed potential )^(-1) as function of k^2
         pass
 
     @abstractmethod

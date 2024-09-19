@@ -14,7 +14,6 @@ class SimulationBox:
             self.np.random.seed()
 
         self.grid_dimensions = tuple(grid_dimensions) #np.array([gd for gd in grid_dimensions],dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
-        #print("grid_dimensions:",self.grid_dimensions)
         self.side_lengths    = np.array(side_lengths)                         # (Lx, Ly, Lz, ...) Side lengths of the simulation box
         if len(grid_dimensions) != len(side_lengths):
             print("[ERROR] grid_dimensions and side_lengths do not have the same shape!")
@@ -57,10 +56,7 @@ class SimulationBox:
             interaction.set_simulation_box(self)
 
         self.Nint = len(self.interactions)
-        #self.field_shape = np.insert(self.grid_dimensions, 0, self.Nint)
-        #self.field_shape = tuple( np.concatenate((np.array([self.Nint]), np.asarray(self.grid_dimensions))) )
         self.field_shape = (self.Nint,) + self.grid_dimensions
-        #print("field_shape:",self.field_shape)
 
         # All fields
         self.Psi = np.zeros(self.field_shape,dtype=complex)
@@ -113,14 +109,3 @@ if __name__ == "__main__":
 
     interactions = (compr,electr,)
     sb = SimulationBox(grid_dimensions,side_lengths,interactions)
-
-
-
-
-
-        
-        
-
-
-
-

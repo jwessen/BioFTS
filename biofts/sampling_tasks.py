@@ -24,7 +24,6 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
         self.pause_at_end = pause_at_end
 
         if species_to_plot is None:
-            #self.species_to_plot = self.np.array( range(len(simulation_box.species)) , dtype=int)
             self.species_to_plot = tuple(range(len(simulation_box.species)))
         else:
             self.species_to_plot = tuple(species_to_plot)
@@ -85,7 +84,7 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
             rho_max = np.max(rho.real)
             rho_min = np.min(rho.real)
         
-        rho_lim = [ np.min([0,rho_min])*0.9, rho_max*1.1 ]
+        rho_lim = [ np.min([0,rho_min])*1.1, rho_max*1.1 ]
 
         # z-coordinate
         z = np.linspace(0,self.simulation_box.side_lengths[-1],self.simulation_box.grid_dimensions[-1])
@@ -135,7 +134,6 @@ class Monitor_Density_Profiles_Averaged_to_1d(SamplingTask):
 # Store the full number density arrays to a binary file
 class Save_Latest_Density_Profiles(SamplingTask):
     def __init__(self, simulation_box, data_directory=''):
-        
         self.simulation_box = simulation_box
         #self.np = simulation_box.np
         import numpy as np
@@ -200,9 +198,6 @@ class Save_1d_Density_Profiles(SamplingTask):
             mu = np.round( np.log(self.simulation_box.species[s].Q).real , decimals=5)
             t = np.round(self.simulation_box.t,decimals=5)
             file = self.data_files[s]
-            
-            # np.log(self.simulation_box.species[0].Q).real
-            # np.log(self.simulation_box.species[s].Q).real
 
             # Append density profile to file as a new line. First column is time, second is sample index, third is chemical potential mu.  The rest are the density profile values.
             with open(file, 'a') as f:
@@ -254,14 +249,10 @@ class Save_Field_Configuration(SamplingTask):
                 molecule.calc_densities()
         else:
             print("File",self.filename,"does not exist. Starting from t=0.")
-            # Throw exception ValueError
-            #raise ValueError('File' + self.filename + '.npy' + ' does not exist!')
 
     # Do nothing
     def finalize(self):
         pass
-
-
 
 # Store simulation trajectory using the h5py package
 class Save_Trajectory(SamplingTask):

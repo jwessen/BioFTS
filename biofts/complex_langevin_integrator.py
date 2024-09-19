@@ -21,7 +21,6 @@ class ComplexLangevinIntegrator:
         
         # Stepping function to be used for CL evolution
         self.shift = available_methods[method]
-
         #self.simulation_box.set_fields_to_homogeneous_saddle()
 
     def _CL_noise(self):
@@ -35,9 +34,6 @@ class ComplexLangevinIntegrator:
     def take_step(self):
         #Calculate the field shifts
         dPsi = self.shift()
-
-        # Add Langevin noise to field shifts    
-        dPsi += self._CL_noise()
 
         # Update fields
         self.simulation_box.Psi += dPsi
@@ -61,10 +57,7 @@ class ComplexLangevinIntegrator:
 
         # Deterministic field shifts
         tmp = self.np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
-        dPsi = -self.dt * ( 1.j*rho + tmp )
-
-        # # Add Langevin noise to field shifts    
-        # dPsi += self._CL_noise()
+        dPsi = -self.dt * ( 1.j*rho + tmp ) + self._CL_noise()
 
         return dPsi
         
@@ -73,7 +66,6 @@ class ComplexLangevinIntegrator:
         pass
 
     def _SemiImplicit_step(self):
-
         # Start with Euler step
         dPsi = self._Euler_step()
 
@@ -82,15 +74,13 @@ class ComplexLangevinIntegrator:
         
         idx = ''.join( ['i','j','k'][:self.simulation_box.d] )
         mult_string = idx+'IJ,J'+idx+'->I'+idx
-        dPsi = self.np.einsum( mult_string, self.Minv, dPsi)
 
+        dPsi = self.np.einsum( mult_string, self.Minv, dPsi)
         dPsi = self.np.array([ self.simulation_box.ift(Psi) for Psi in dPsi ])
 
         return dPsi
 
     def _setup_SemiImplicit(self): 
-        print("Setting up the semi-implicit method...")
-        
         K = self.np.einsum( 'IJ,I...->...IJ' , self.np.eye(self.simulation_box.Nint) , self.simulation_box.G0 , dtype=complex)
         for mol in self.simulation_box.species:
             K += mol.calc_quadratic_coefficients()
@@ -99,7 +89,6 @@ class ComplexLangevinIntegrator:
         self.Minv = self.np.linalg.inv(M)
 
     def run_ComplexLangevin(self, n_steps, sample_interval=1, sampling_tasks = ()):
-
         for i in range(n_steps):
             if i%sample_interval==0:
                 print("i:",i,"t:",self.np.round(self.simulation_box.t,decimals=5))
@@ -134,7 +123,6 @@ if __name__ == "__main__":
         while len(rho.shape)>1:
             rho = np.mean(rho,axis=0)
         return rho
-
 
     ##### Set-up simulation box ###### 
     # Compressibility
