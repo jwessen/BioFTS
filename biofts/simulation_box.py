@@ -13,8 +13,8 @@ class SimulationBox:
             self.np = np
             self.np.random.seed()
 
-        self.grid_dimensions = tuple(grid_dimensions) #np.array([gd for gd in grid_dimensions],dtype=int)  # (Nx, Ny, Nz, ...) Number of grid points in every dimension
-        self.side_lengths    = np.array(side_lengths)                         # (Lx, Ly, Lz, ...) Side lengths of the simulation box
+        self.grid_dimensions = tuple(grid_dimensions) # (Nx, Ny, Nz, ...) Number of grid points in every dimension
+        self.side_lengths    = np.array(side_lengths) # (Lx, Ly, Lz, ...) Side lengths of the simulation box
         if len(grid_dimensions) != len(side_lengths):
             print("[ERROR] grid_dimensions and side_lengths do not have the same shape!")
             sys.exit()
@@ -45,7 +45,6 @@ class SimulationBox:
             self.k2 = np.array( [[[ kx[i]**2 + ky[j]**2 + kz[k]**2 for k in range(self.grid_dimensions[2]) ] 
                                                                    for j in range(self.grid_dimensions[1]) ]
                                                                    for i in range(self.grid_dimensions[0]) ])
-
             self.idx_str = 'ijk'
         else:
             print("[ERROR] d =",self.d,"dimensions is not implemented!")
@@ -67,10 +66,10 @@ class SimulationBox:
         self.G0 = np.array([ I.V_inverse(self.k2) for I in self.interactions], dtype=float)
 
     def ft(self,field):
-        return self.np.fft.fftn(field)
+        return self.np.fft.fftn(field) * self.dV
 
     def ift(self,field):
-        return self.np.fft.ifftn(field)
+        return self.np.fft.ifftn(field) / self.dV
 
     def set_fields_to_homogeneous_saddle(self):
         self.Psi *= 0
