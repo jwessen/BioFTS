@@ -23,7 +23,7 @@ For an application of FTS to IDPs with both long-range electrostatic interaction
 BioFTS can be used to study any polymer field theory described by a Hamiltonian on the form
 
 $$
-H[\lbrace\psi_a(\vec{r}) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) .
+H[\lbrace\psi_a(\vec{r}) \rbrace] = -\sum_{i=1}^{M_{\rm C}} n_i \ln Q_i[\lbrace \psi_a \rbrace] - \sum_{I=1}^{M_{\rm G}} z_I V Q_I[\lbrace \psi_a \rbrace] + \int \mathrm{d}^d \vec{r} \frac{1}{2} \sum_{a} \psi_a(\vec{r}) \hat{V}_a^{-1} \psi_a(\vec{r}) .
 $$
 
 Here, $\psi_a(\vec{r})$ is a field that decouples interactions of type $a$, i.e. the index $a$ runs over all possible interactions in the system such as electrostatic interactions, excluded volume interactions, etc. The system contains $M_{\rm C}$ molecular species in the canonical ensemble (fixed number of molecules $n_i$) and $M_{\rm G}$ molecular species in the grand canonical ensemble (fixed activities $z_I$). The $Q_i$ and $Q_I$ are complex-valued single-molecule partition functions for the canonical and grand canonical species, respectively. The last term contains the inverse operators for the respective interaction potentials $V_a(r)$. 
@@ -76,7 +76,7 @@ You can define any number of interactions in this way.
 
 ### Step 2: Create the simulation box
 
-A simulation box is created by specifying the number of lattice sites in each dimension, the lattice spacing, and the interactions in the system. For example,
+A simulation box is created by specifying the number of lattice sites in each dimension, the side-lengths of the simulation box and the interactions in the system. For example,
 
 ```python
 

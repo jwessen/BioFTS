@@ -2,6 +2,47 @@ import sys
 
 # Rectangular d-dimensional simulation box
 class SimulationBox:
+    """
+    A class to represent a d-dimensional simulation box with periodic boundary conditions.
+
+    Attributes
+    ----------
+    grid_dimensions : tuple of int
+        Number of grid points in every dimension.
+    side_lengths : numpy array of float
+        Side lengths of the simulation box.
+    interactions : tuple of InteractionPotential objects
+        Interaction potentials between species. Each interaction potential results in a field in the simulation box, representing the conjugate of the corresponding charge density.
+    species : tuple of species objects (E.g. LinearPolymer objects)
+        Species in the simulation box. The species objects have attributes like charge densities, etc.
+    Psi : numpy array of complex float
+        Fields in the simulation box. Each field represents the conjugate of the charge density of a species.
+    t : float
+        Current Complex Langevin time. Initialized to 0.
+    d : int
+        Number of spatial dimensions.
+    dx : numpy array of float
+        Grid spacings in every dimension.
+    V : float
+        Volume of the simulation box.
+    dV : float
+        Volume element of the simulation box.
+    k2 : numpy array of float
+        Squared wave-vectors for Fourier transforms.
+    np : numpy or cupy module
+        Numpy or cupy module for numerical computations. If use_GPU is True, then np is cupy, else it is numpy.
+    use_GPU : bool
+        If True, then use cupy for numerical computations, else use numpy.
+
+    Methods
+    -------
+    ft(field)
+        Returns the Fourier transform of a field.
+    ift(field)
+        Returns the inverse Fourier transform of a field.        
+    """
+
+
     def __init__(self, grid_dimensions, side_lengths, interactions, use_GPU = False):
 
         self.use_GPU = use_GPU
