@@ -64,7 +64,8 @@ class LinearPolymer:
             ValueError("LinearPolymer: NaNs detected in self.simulation_box.Psi.")
 
         # Calculate propagators from fluctuations about the mean. 
-        Psi_s = np.asarray( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
+        #Psi_s = np.asarray( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
+        Psi_s = np.array( [ self.ift( self.Gamma*self.ft( Psi - np.mean(Psi) ) ) for Psi in self.simulation_box.Psi ] )
 
         if np.any( np.isnan(Psi_s) ):
             ValueError("LinearPolymer: NaNs detected in Psi_s.")
@@ -92,6 +93,8 @@ class LinearPolymer:
         self.Q = np.sum( self.qF[-1] ) * self.dV / self.V
         if np.isnan(self.Q):
             ValueError("LinearPolymer: self.Q is NaN.")
+        elif self.Q == 0:
+            ValueError("LinearPolymer: self.Q is zero.")
         
         qs = self.qF * self.qB * np.exp(W) # Residue-specific bead center number density! (if multiplied by rho_bulk)
         if np.any( np.isnan(qs) ):
@@ -108,14 +111,22 @@ class LinearPolymer:
         exp_av_W = np.exp( -1j * np.sum( av_Psi.dot(self.q) ) )
         if np.isnan(exp_av_W):
             ValueError("LinearPolymer: exp_av_W is NaN.")
+        elif exp_av_W == 0:
+            ValueError("LinearPolymer: exp_av_W is zero.")
         self.Q *= exp_av_W
 
-        if not self.is_canonical:
+        if np.isnan(self.Q):
+            ValueError("LinearPolymer: Final self.Q is NaN.")
+        elif self.Q == 0:
+            ValueError("LinearPolymer: Final self.Q is zero.")
+
+        if not self.is_canonical: # Only do this if in grand-canonical ensemble
             self.rho *= exp_av_W
             self.rhob *= exp_av_W
 
         for I in range(self.Nint):
             self.rho[I] = self.ift( self.Gamma*self.ft(self.rho[I]) )
+
     
     # Calculates the coefficients of the quadratic term in the expansion of Q.
     def calc_quadratic_coefficients(self):
@@ -141,9 +152,11 @@ class LinearPolymer:
 
         qs = self.qF * self.qB * np.exp(W)
 
+        Q = np.sum( self.qF[-1] ) * self.dV / self.V
+        
         rho_residue = self.rho_bulk * qs 
         if self.is_canonical:
-            rho_residue = rho_residue / self.Q
+            rho_residue = rho_residue / Q
         else:
             ValueError("LinearPolymer: calc_residue_specific_densities() is not implemented for grand-canonical ensemble.")
 
@@ -160,6 +173,7 @@ class LinearPolymer:
 
         if self.is_canonical:
             mu = np.log(self.rho_bulk) - np.log(self.Q)
+            #print("mu:",mu, "rho_bulk:",self.rho_bulk, "Q:",self.Q)
             return mu
         else:
             return self.rho_bulk * self.Q # Instantaneous chain bulk density. rho_bulk is the activity parameter.
