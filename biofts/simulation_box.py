@@ -1,4 +1,5 @@
 import sys
+import datetime 
 
 # Rectangular d-dimensional simulation box
 class SimulationBox:
@@ -33,17 +34,20 @@ class SimulationBox:
         Numpy or cupy module for numerical computations. If use_GPU is True, then np is cupy, else it is numpy.
     use_GPU : bool
         If True, then use cupy for numerical computations, else use numpy.
+    output_dir : str
+        Output directory where log file is placed. If None, then log messages are printed to the console.
 
     Methods
     -------
     ft(field)
         Returns the Fourier transform of a field.
     ift(field)
-        Returns the inverse Fourier transform of a field.        
+        Returns the inverse Fourier transform of a field.
+    calculate_MFT_solution_before_shift()
+        Calculates the mean field theory solution before the field shift, such that the fields now describe fluctuations about the saddle point. Therefore, the fields should average to zero. It is important that this function is called by the ComplexLangevinIntegrator before the simulation is started. 
     """
 
-
-    def __init__(self, grid_dimensions, side_lengths, interactions, use_GPU = False):
+    def __init__(self, grid_dimensions, side_lengths, interactions, use_GPU = False, output_dir = None):
 
         self.use_GPU = use_GPU
         if use_GPU:
@@ -57,8 +61,8 @@ class SimulationBox:
         self.grid_dimensions = tuple(grid_dimensions) # (Nx, Ny, Nz, ...) Number of grid points in every dimension
         self.side_lengths    = np.array(side_lengths) # (Lx, Ly, Lz, ...) Side lengths of the simulation box
         if len(grid_dimensions) != len(side_lengths):
-            print("[ERROR] grid_dimensions and side_lengths do not have the same shape!")
-            sys.exit()
+            msg = "[ERROR] grid_dimensions and side_lengths do not have the same shape!"
+            self.log(msg, level='error')
         
         self.d  = len(grid_dimensions) # Number of spatial dimensions
         self.dx = np.array(side_lengths,dtype=float) / np.array( grid_dimensions , dtype=float )
@@ -67,8 +71,13 @@ class SimulationBox:
         self.dV = np.prod(self.dx)
 
         self.t = 0. # Current Complex Langevin time
+        self.output_dir = output_dir
+        if self.output_dir is not None:
+            with open(self.output_dir + 'log.txt', 'w') as f:
+                msg = "Simulation box initialized at " + str(datetime.datetime.now())
+                f.write(msg + '\n')
 
-        # The below code constructs the wave-vectors for d=1,2,3. Is there a clean way to do it for generic number of dimensions??
+        # The below code constructs the wave-vectors for d=1,2,3. Is there a clean way to do it for generic number of dimensions?
         if self.d==1:
             kx = 2.*np.pi*np.fft.fftfreq(self.grid_dimensions[0],self.dx[0])
             self.k2 = kx**2
@@ -88,8 +97,8 @@ class SimulationBox:
                                                                    for i in range(self.grid_dimensions[0]) ])
             self.idx_str = 'ijk'
         else:
-            print("[ERROR] d =",self.d,"dimensions is not implemented!")
-            sys.exit()
+            msg = "[ERROR] d =",self.d,"dimensions is not implemented!"
+            self.log(msg, level='error')
         
         self.interactions = interactions
         for interaction in self.interactions:
@@ -111,25 +120,90 @@ class SimulationBox:
 
     def ift(self,field):
         return self.np.fft.ifftn(field) / self.dV
-
-    def set_fields_to_homogeneous_saddle(self):
-        self.Psi *= 0
-        for molecule in self.species:
-            if molecule.is_canonical == False:
-                print("Warning! Species",molecule,"is in grand-canonical ensemble. Treating as canonical to compute saddle.")
-        
-        G0_MFT = self.np.array([ I.V_inverse( self.np.array([0]) ) for I in self.interactions], dtype=float)[:,0]
-        
-        rho_bulks = self.np.array([ molecule.rho_bulk for molecule in self.species ])
-        for I in range(self.Nint):
-            if G0_MFT[I] != 0:
-                qs = self.np.array([ self.np.sum(molecule.q[I]) for molecule in self.species] )
-                rho = self.np.sum( rho_bulks * qs )
-                self.Psi[I] -= 1j * rho / G0_MFT[I]
-
-        for molecule in self.species:
-            molecule.calc_densities()
     
+    def calculate_MFT_solution_before_shift(self):
+        np = self.np
+        self.Psi_MFT = np.zeros(self.Nint,dtype=complex)
+
+        all_species_canonical = all(species.ensemble == 'canonical' for species in self.species)
+
+        if all_species_canonical:
+            # Calculate the mean field solution exactly.
+            rho_charge_bulk = np.sum([ species.rho_charges_bulk for species in self.species ], axis=0) # rho_charge_bulk[a] is total bulk charge density of type-a charges (summed over all species)
+
+            for I in range(self.Nint):
+                Vinv = self.interactions[I].V_inverse(0)
+                if Vinv == 0:
+                    if rho_charge_bulk[I] != 0:
+                        msg = f"rho_charge_bulk[{I}] is non-zero but Vinv[{I}] = 0 so the mean field solution is not well-defined. This means that the system net charge is non-zero for an infinite-range interaction potential. You may need to either (1) add explicit counterions or (2) use a Debye-screened electrostatic interaction potential."
+                        self.log(msg, level='error')
+                    self.Psi_MFT[I] = 0
+                else:
+                    self.Psi_MFT[I] = -1j * rho_charge_bulk[I] / Vinv
+        else:
+            self.log("Grand-canonical ensemble species detected. Solving MFT numerically.")
+            # Canonical ensemble species charge density contributions
+            rho_charge_bulk_C = np.sum([ species.rho_charges_bulk for species in self.species if species.ensemble=='canonical' ], axis=0)
+            all_Vinv = np.array([ I.V_inverse(0) for I in self.interactions], dtype=float)
+
+            # This is only used to figure out xi_a (i.e. if there are imaginary charges)
+            rho_charge_bulk = np.sum([ species.rho_charges_bulk for species in self.species], axis=0)
+            # xi_a = 1 if imag(rho_charge_bulk)==0, otherwise xi_a = -1j
+            xi_a = np.where(np.imag(rho_charge_bulk)==0, 1, -1j)
+            q_GC = np.array([ species.q_tot for species in self.species if species.ensemble=='grand-canonical' ])  # q_GC[I,a] is the charge of grand-canonical species I for charge type a
+            xi_q_GC = np.einsum('Ia,a->Ia',q_GC,xi_a)
+
+            def root_func(x):
+                x = np.array(x) # x_a = xi_a * 1j * bar(psi)_a where bar(psi)_a is MFT solution
+                
+                #exp_arg_prev = - xi_q_GC.dot(x)
+                exp_arg = -np.einsum('Ia,a->I',xi_q_GC,x)
+
+                z_I = np.array([species.rho_bulk for species in self.species if species.ensemble=='grand-canonical']) # Activity parameters of grand-canonical species
+                rho_bulk_G = z_I * np.exp(exp_arg) # Number densities of grand-canonical species
+                rho_charge_bulk_GC = np.einsum('Ia,I->a',q_GC,rho_bulk_G) # Charge densities of grand-canonical species
+
+                LHS = (rho_charge_bulk_C + rho_charge_bulk_GC)*xi_a
+                RHS = all_Vinv * x
+                return (LHS - RHS).real
+
+            x0 = np.ones(self.Nint)
+
+            self.log("Importing root from scipy.optimize")
+            from scipy.optimize import root
+            self.log("  Done. Solving....")
+            sol = root(root_func, x0)
+            self.log(sol)
+            print(sol.success)
+            if sol.success == True:
+                self.log("MFT solution found. Proceeding.")
+            else:
+                msg = "MFT solution not found."
+                self.log(msg, level='error')
+
+            sol_x = sol.x
+
+            self.Psi_MFT = sol_x / xi_a * (-1j)
+            I = 0
+            exp_arg = np.einsum('a,Ia->I',sol_x,xi_q_GC).real
+            for species in self.species:
+                if species.ensemble == 'grand-canonical':
+                    new_bulk = species.rho_bulk * np.exp(-exp_arg[I])
+                    print("New bulk:",new_bulk)
+                    species.set_rho_bulk(new_bulk)
+                    I+=1
+                
+                self.log("MFT bulk number density:",species.molecule_id,species.rho_bulk)
+
+    def log(self, *message, level=''):
+        message = ' '.join(map(str, message))
+        if self.output_dir is not None:
+            with open(self.output_dir + 'log.txt', 'a') as f:
+                f.write(message + '\n')
+        print(message)
+        
+        if level == 'error':
+            raise ValueError(message)
 
 if __name__ == "__main__":
     import interaction_potentials as int_pot

@@ -55,6 +55,7 @@ seqs['sv30'] = 'EEEEEEEEEEEEEEEEEEEEEEEEEKKKKKKKKKKKKKKKKKKKKKKKKK'
 aa_charges = {'E':-1,'K':1}        # Electric charges for each amino acid type
 
 b = 1.                             # Kuhn length, base unit for length scale
+a = b/np.sqrt(6.)                  # Gaussian smearing length
 output_dir = 'data/example_model_1/'     # Output directory (will be created if it does not exist)
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -73,7 +74,6 @@ interactions = (excluded_volume,electrostatics,)
 
 ### Step 2: Create the simulation box ####
 grid_dimensions = [10,10,40]
-a = b/np.sqrt(6.)
 side_lengths = a * np.array(grid_dimensions,dtype=float)
 
 sb = biofts.SimulationBox(grid_dimensions, side_lengths, interactions, use_GPU=False)
@@ -94,8 +94,7 @@ q[1,:] = [ aa_charges[aa] for aa in aa_sequence ]
 rho_bulk = 2./N # rho_bulk is chain number density, n/V. Bead number density is n*N/V.
 
 # Create the polymer species
-a = b/np.sqrt(6.) # Gaussian smearing length
-biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=mol_id, is_canonical=True)
+biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=mol_id, ensemble='canonical')
 
 ### Step 4: Set-up Complex Langevin integrator and sampling tasks ####
 dt = 1e-3

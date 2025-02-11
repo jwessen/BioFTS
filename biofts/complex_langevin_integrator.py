@@ -10,18 +10,18 @@ class ComplexLangevinIntegrator:
         self.simulation_box = simulation_box
         self.noise = noise
 
+        
+
         available_methods = {'euler'        : self._Euler_step ,\
                              'semi-implicit': self._SemiImplicit_step}
         if method not in available_methods:
-            print("[ERROR] The integration method does not exist. Available methods are",list( available_methods.keys()) )
-            sys.exit()
-        setup_function = {'euler'        : self._setup_Euler ,\
-                          'semi-implicit': self._setup_SemiImplicit}[method]
-        setup_function()
+            msg = "[ERROR] The integration method does not exist. Available methods are",list( available_methods.keys()) 
+            self.simulation_box.log(msg, level='error')
+        self.setup_function = {'euler'        : self._setup_Euler ,\
+                               'semi-implicit': self._setup_SemiImplicit}[method]
         
         # Stepping function to be used for CL evolution
         self.shift = available_methods[method]
-        #self.simulation_box.set_fields_to_homogeneous_saddle()
 
     def _CL_noise(self):
         if self.noise == 0:
@@ -52,16 +52,20 @@ class ComplexLangevinIntegrator:
         # rho[I,x,y,z,...] is type-I charge density
         rho = self.np.sum( self.np.array([molecule.rho for molecule in self.simulation_box.species]) , axis=0)
 
+        # rho_charge_bulk[I] is the bulk charge density of type-I charges
+        rho_charge_bulk = self.np.sum( [ molecule.rho_charges_bulk for molecule in self.simulation_box.species ], axis=0)
+        for I in range(len(rho)):
+            rho[I] -= rho_charge_bulk[I]
+
         # Fourier transformed fields
         f_Psi = self.np.array([ self.simulation_box.ft( Psi ) for Psi in self.simulation_box.Psi])
 
         # Deterministic field shifts
         tmp = self.np.array([ self.simulation_box.ift( self.simulation_box.G0[I] * f_Psi[I]) for I in range(len(f_Psi))] )
         dPsi = -self.dt * ( 1.j*rho + tmp ) + self._CL_noise()
-
+        
         return dPsi
         
-
     def _setup_Euler(self):
         pass
 
@@ -89,13 +93,23 @@ class ComplexLangevinIntegrator:
         self.Minv = self.np.linalg.inv(M)
 
     def run_ComplexLangevin(self, n_steps, sample_interval=1, sampling_tasks = ()):
+
+        self.simulation_box.calculate_MFT_solution_before_shift()
+        self.setup_function()
+
         for i in range(n_steps):
             if i%sample_interval==0:
-                print("i:",i,"t:",self.np.round(self.simulation_box.t,decimals=5))
+                self.simulation_box.log("i:",i,"t:",self.np.round(self.simulation_box.t,decimals=5))
+
+                psi_av = self.np.array([ self.np.mean(Psi) for Psi in self.simulation_box.Psi])
+                print("psi_av:",psi_av)
                 for task in sampling_tasks:
                     task.sample(i)
 
-            self.take_step()
+            success = self.take_step()
+            if not success:
+                self.simulation_box.log("[ERROR] NaNs detected in fields or densities. Stopping simulation at step",i)
+                break
             self.simulation_box.t += self.dt
         
         for task in sampling_tasks:

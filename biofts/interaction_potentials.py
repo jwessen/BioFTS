@@ -29,7 +29,7 @@ class Yukawa(InteractionPotential):
     set_simulation_box(simulation_box)
         Sets the numpy module of the simulation box to the numpy module of the simulation box.  
     """
-    def __init__(self, l, kappa=0.):
+    def __init__(self, l, kappa=0):
         """
         Initializes the interaction potential with given parameters.
 
@@ -79,7 +79,8 @@ class Contact(InteractionPotential):
         self.gamma = gamma
     
     def V_inverse(self,k2):
-        return self.gamma * self.np.ones(k2.shape)
+        #return self.gamma * self.np.ones(k2.shape)
+        return self.gamma * (k2*0 + 1.)
     
     def set_simulation_box(self, simulation_box):
         self.np = simulation_box.np

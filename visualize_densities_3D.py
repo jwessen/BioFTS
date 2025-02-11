@@ -25,45 +25,40 @@ import numpy as np
 import sys
 import matplotlib.colors as mcolors
 
-##### Functions for shifting to center of mass ####
-def get_com(rho):
-    Nx, Ny, Nz = rho.shape
-    x, y, z = np.mgrid[0:Nx, 0:Ny, 0:Nz]
-
-    psi = 2.*np.pi / Nx * np.array([ x , y , z])
-    xi   = np.cos( psi )
-    zeta = np.sin( psi )
-
-    rho_R = rho.real.clip(min=0)
-    M_tot = np.sum(rho_R)
-    
-    av_xi   = np.array( [ np.sum( rho_R * xi[i]   ) for i in range(0,3) ] ) / M_tot
-    av_zeta = np.array( [ np.sum( rho_R * zeta[i] ) for i in range(0,3) ] ) / M_tot
-    av_phi  = np.array( [ np.arctan2( av_zeta[i] , av_xi[i] ) for i in range(0,3) ] )
-    av_phi  = (av_phi + 2. * np.pi ) % (2. * np.pi)
-    #com     = np.round( Nx * av_phi / ( 2. * np.pi ) ).astype(int)
-
-    com = [ int(av_phi[i] * [Nx,Ny,Nz][i] / (2.*np.pi) ) for i in range(0,3) ]
+##### Functions for shifting to center of mass #####
+def get_com(rho): # Get center of mass
+    Nx = rho.shape
+    D = len(Nx) # Number of dimensions
+    com = np.zeros(D,dtype=int)
+    for i in range(D):
+        axis = tuple( [ (i+j)%D for j in range(1,D) ])
+        rho_av = np.mean(rho,axis=axis )
+        psi = 2.*np.pi / Nx[i] * np.arange(Nx[i])
+        xi   = np.cos( psi )
+        zeta = np.sin( psi )
+        av_xi   = np.sum( rho_av * xi )
+        av_zeta = np.sum( rho_av * zeta )
+        av_phi  = np.arctan2( av_zeta , av_xi )
+        
+        com[i] = ( int( Nx[i] * av_phi / ( 2. * np.pi ) ) + Nx[i] ) % Nx[i]
 
     return com
 
-def shift( rho, com=[] ): # Shift to center of mass
+def shift(rho, com=[]): # Shift to center of mass
     if len(com) == 0:
         com = get_com(rho)
-    Nx, Ny, Nz = rho.shape
-    rho_new = np.zeros(rho.shape,dtype=float)
-    for i in range(Nx):
-        ii = int( (i+Nx//2+com[0])%Nx )
-        for j in range(Ny):
-            jj = int( (j+Ny//2+com[1])%Ny )
-            for k in range(Nz):
-                kk = int( (k+Nz//2+com[2])%Nz )
-                rho_new[ii,jj,kk] = rho[i,j,k]             
+    Nx = rho.shape
+    D = len(Nx)
+    rho_new = np.zeros(rho.shape, dtype=float)
+    for idx in np.ndindex(rho.shape):
+        new_idx = tuple((idx[i] + 3 * Nx[i] // 2 - com[i]) % Nx[i] for i in range(D))
+        rho_new[new_idx] = rho[idx]
     return rho_new
 
 #### Load data ####
 if len(sys.argv) < 2:
-    file_path = 'data/example_model_2_GC/density_profiles.npz'
+    file_path = 'data/example_model_1/'
+    file_path += 'density_profiles.npz'
 else:
     file_path = sys.argv[1]
 
@@ -75,7 +70,6 @@ all_rho    = file['rho']
 all_rho    = [ rho.real for rho in all_rho ] # Remove imaginary part
 
 com = get_com(all_rho[0]) # Get center of mass of first species
-print("Center of mass:",com)
 all_rho = [ shift(rho,com) for rho in all_rho ] # Shift to center of mass
 
 for i in range(len(all_labels)):
