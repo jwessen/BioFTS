@@ -138,7 +138,7 @@ biofts.LinearPolymer(q,a,b,rho_bulk,sb,molecule_id=seq_label)
 
 You can add any number of polymer species to the simulation box in this way. Note that $N=1$ variants of the `LinearPolymer` object can be used to represent explicit salt ions and solvent particles. 
 
-For species in the grand canonical ensemble, you can supply the argument `is_canonical=False` to the `LinearPolymer` constructor. In this case, the `rho_bulk` argument is interpreted as the activity of the species (i.e. the exponential of the chemical potential).
+For species in the grand canonical ensemble, you can supply the argument `ensemble='grand-canonical'` to the `LinearPolymer` constructor. In this case, the `rho_bulk` argument is interpreted as the activity of the species (i.e. the exponential of the chemical potential).
 
 
 ### Step 4: Run the simulation
