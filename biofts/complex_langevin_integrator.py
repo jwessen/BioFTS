@@ -101,8 +101,6 @@ class ComplexLangevinIntegrator:
             if i%sample_interval==0:
                 self.simulation_box.log("i:",i,"t:",self.np.round(self.simulation_box.t,decimals=5))
 
-                psi_av = self.np.array([ self.np.mean(Psi) for Psi in self.simulation_box.Psi])
-                print("psi_av:",psi_av)
                 for task in sampling_tasks:
                     task.sample(i)
 
