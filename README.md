@@ -1,6 +1,8 @@
 # BioFTS
 
-The BioFTS package is Python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling written by Jonas Wessén. The code is applicable to a large class of polymer field theories but a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates.
+![Flow_examples](graph_abs.png)
+
+BioFTS is a Python package for field theoretic simulations (FTS) of polymer field theories through Complex-Langevin sampling written by Jonas Wessén. The code is applicable to a large class of polymer field theories but a particular goal of the package is simulations of liquid-liquid phase-separation of intrinsically disordered proteins (IDPs) and other processes relevant to biomolecular condensates.
 
 ## Background
 
