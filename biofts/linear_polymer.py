@@ -23,6 +23,7 @@ class LinearPolymer:
             self.ensemble = ensemble         # Either 'canonical' or 'grand-canonical'
             #self.rho_bulk = rho_bulk        # Molecule number density (n_i/V) for canonical ensemble, activity parameter for grand-canonical ensemble
             self.molecule_id = molecule_id   # Identifier for this molecule
+            self.activity = rho_bulk         # Activity parameter (grand-canonical ensemble) # Suggested by Daeseong Yong, thank you!
         
             self.Nint = len(q)     # Number of interactions
             self.N    = len(q[0])  # Polymerization degree

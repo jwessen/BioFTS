@@ -154,7 +154,9 @@ class SimulationBox:
             # xi_a = 1 if imag(rho_charge_bulk)==0, otherwise xi_a = -1j
             xi_a = np.where(np.imag(rho_charge_bulk)==0, 1, -1j)
             q_GC = np.array([ species.q_tot for species in self.species if species.ensemble=='grand-canonical' ])  # q_GC[I,a] is the charge of grand-canonical species I for charge type a
-            xi_q_GC = np.einsum('Ia,a->Ia',q_GC,xi_a)
+            
+            #xi_q_GC = np.einsum('Ia,a->Ia',q_GC,xi_a)
+            xi_q_GC = np.einsum('Ia,a->Ia',q_GC,1/xi_a) # Suggested by Daeseong Yong. Thank you!!
 
             def root_func(x):
                 x = np.array(x) # x_a = xi_a * 1j * bar(psi)_a where bar(psi)_a is MFT solution
@@ -162,7 +164,8 @@ class SimulationBox:
                 #exp_arg_prev = - xi_q_GC.dot(x)
                 exp_arg = -np.einsum('Ia,a->I',xi_q_GC,x)
 
-                z_I = np.array([species.rho_bulk for species in self.species if species.ensemble=='grand-canonical']) # Activity parameters of grand-canonical species
+                #z_I = np.array([species.rho_bulk for species in self.species if species.ensemble=='grand-canonical']) # Activity parameters of grand-canonical species
+                z_I = np.array([species.activity for species in self.species if species.ensemble=='grand-canonical']) # Activity parameters of grand-canonical species
                 rho_bulk_G = z_I * np.exp(exp_arg) # Number densities of grand-canonical species
                 rho_charge_bulk_GC = np.einsum('Ia,I->a',q_GC,rho_bulk_G) # Charge densities of grand-canonical species
 
@@ -191,7 +194,8 @@ class SimulationBox:
             exp_arg = np.einsum('a,Ia->I',sol_x,xi_q_GC).real
             for species in self.species:
                 if species.ensemble == 'grand-canonical':
-                    new_bulk = species.rho_bulk * np.exp(-exp_arg[I])
+                    #new_bulk = species.rho_bulk * np.exp(-exp_arg[I])
+                    new_bulk = species.activity * np.exp(-exp_arg[I]) # Suggested by Daeseong Yong, thank you!!
                     print("New bulk:",new_bulk)
                     species.set_rho_bulk(new_bulk)
                     I+=1
