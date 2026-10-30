@@ -53,7 +53,7 @@ class ComplexLangevinIntegrator:
         rho = self.np.sum( self.np.array([molecule.rho for molecule in self.simulation_box.species]) , axis=0)
 
         # rho_charge_bulk[I] is the bulk charge density of type-I charges
-        rho_charge_bulk = self.np.sum( [ molecule.rho_charges_bulk for molecule in self.simulation_box.species ], axis=0)
+        rho_charge_bulk = self.np.sum( self.np.array([ molecule.rho_charges_bulk for molecule in self.simulation_box.species ]), axis=0)
         for I in range(len(rho)):
             rho[I] -= rho_charge_bulk[I]
 

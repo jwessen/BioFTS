@@ -129,13 +129,16 @@ class SimulationBox:
 
         if all_species_canonical:
             # Calculate the mean field solution exactly.
-            rho_charge_bulk = np.sum([ species.rho_charges_bulk for species in self.species ], axis=0) # rho_charge_bulk[a] is total bulk charge density of type-a charges (summed over all species)
+            rho_charge_bulk = np.sum(np.array([ species.rho_charges_bulk for species in self.species ]), axis=0) # rho_charge_bulk[a] is total bulk charge density of type-a charges (summed over all species)
+            print('rho_charge_bulk:', rho_charge_bulk)#, [species.rho_bulk*50 for species in self.species])
+            # Round elements of rho_charge_bulk to zero if they are very small
+            rho_charge_bulk = np.where(np.abs(rho_charge_bulk) < 1e-15, 0, rho_charge_bulk)
 
             for I in range(self.Nint):
                 Vinv = self.interactions[I].V_inverse(0)
                 if Vinv == 0:
                     if rho_charge_bulk[I] != 0:
-                        msg = f"rho_charge_bulk[{I}] is non-zero but Vinv[{I}] = 0 so the mean field solution is not well-defined. This means that the system net charge is non-zero for an infinite-range interaction potential. You may need to either (1) add explicit counterions or (2) use a Debye-screened electrostatic interaction potential."
+                        msg = f"rho_charge_bulk[{I}] is non-zero but Vinv[{I}] = 0 so the mean field solution is not well-defined. This means that the system net charge is non-zero for an infinite-range interaction potential. You may need to either (1) add explicit counter-ions or (2) use a Debye-screened electrostatic interaction potential."
                         self.log(msg, level='error')
                     self.Psi_MFT[I] = 0
                 else:
@@ -143,11 +146,11 @@ class SimulationBox:
         else:
             self.log("Grand-canonical ensemble species detected. Solving MFT numerically.")
             # Canonical ensemble species charge density contributions
-            rho_charge_bulk_C = np.sum([ species.rho_charges_bulk for species in self.species if species.ensemble=='canonical' ], axis=0)
+            rho_charge_bulk_C = np.sum(np.array([ species.rho_charges_bulk for species in self.species if species.ensemble=='canonical' ]), axis=0)
             all_Vinv = np.array([ I.V_inverse(0) for I in self.interactions], dtype=float)
 
             # This is only used to figure out xi_a (i.e. if there are imaginary charges)
-            rho_charge_bulk = np.sum([ species.rho_charges_bulk for species in self.species], axis=0)
+            rho_charge_bulk = np.sum(np.array([ species.rho_charges_bulk for species in self.species]), axis=0)
             # xi_a = 1 if imag(rho_charge_bulk)==0, otherwise xi_a = -1j
             xi_a = np.where(np.imag(rho_charge_bulk)==0, 1, -1j)
             q_GC = np.array([ species.q_tot for species in self.species if species.ensemble=='grand-canonical' ])  # q_GC[I,a] is the charge of grand-canonical species I for charge type a
@@ -194,6 +197,9 @@ class SimulationBox:
                     I+=1
                 
                 self.log("MFT bulk number density:",species.molecule_id,species.rho_bulk)
+        
+        # print(self.Psi_MFT)
+        # sys.exit()
 
     def log(self, *message, level=''):
         message = ' '.join(map(str, message))

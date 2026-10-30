@@ -17,7 +17,7 @@ class LinearPolymer:
         else:
             simulation_box.log("Adding molecule",molecule_id,"to simulation box.")
 
-            self.q = np.copy(q)              # q[I,alpha] is charge type I of bead alpha
+            self.q = np.asarray(np.copy(q))              # q[I,alpha] is charge type I of bead alpha
             self.a = a                       # Smearing length
             self.b = b                       # Kuhn Length
             self.ensemble = ensemble         # Either 'canonical' or 'grand-canonical'
@@ -140,16 +140,28 @@ class LinearPolymer:
 
     # Calculates the coefficients of the quadratic term in the expansion of Q.
     def calc_quadratic_coefficients(self):
-        np = self.np
+        if self.simulation_box.use_GPU:
+            import numpy as np
+            k2 = self.simulation_box.k2.get()
+            Gamma = self.Gamma.get()
+            q = self.q.get()
+        else:
+            np = self.np
+            k2 = self.simulation_box.k2
+            Gamma = self.Gamma
+            q = self.q
 
         res_diff = np.array( [[ np.abs(alpha-beta) for alpha in range(self.N) ] for beta in range(self.N) ])
-        connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, self.simulation_box.k2) * self.b**2/6. )
-        connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, self.Gamma**2)
-        g = np.einsum( 'Ia,Jb,ab...->...IJ', self.q, self.q, connection_tensor )
+        connection_tensor = np.exp( - np.einsum('ab,...->ab...', res_diff, k2) * self.b**2/6. )
+        connection_tensor = np.einsum('ab...,...->ab...', connection_tensor, Gamma**2)
+        g = np.einsum( 'Ia,Jb,ab...->...IJ', q, q, connection_tensor )
 
         if self.ensemble == 'canonical':
             idx = tuple( [0 for _ in range(len(self.grid_dimensions))] )
             g[ idx ] *= 0
+        
+        if self.simulation_box.use_GPU:
+            g = self.np.array(g) # Transfer to GPU
 
         return g * self.rho_bulk
     
@@ -182,8 +194,8 @@ class LinearPolymer:
         np = self.np
 
         if self.ensemble == 'canonical':
-            mu = np.log(self.rho_bulk) - np.log(self.Q) - 1j * self.rho_charges_bulk.dot(self.simulation_box.Psi_MFT)
-            #print("mu:",mu, "rho_bulk:",self.rho_bulk, "Q:",self.Q)
+            mu = np.log(self.rho_bulk) - np.log(self.Q) + 1j * self.q_tot.dot(self.simulation_box.Psi_MFT)
+            #print("mu:",mu, "rho_charges_bulk:",self.rho_charges_bulk, "Q:",self.Q,'Psi_MFT:',self.simulation_box.Psi_MFT, "dot prod:",1j * self.rho_charges_bulk.dot(self.simulation_box.Psi_MFT))
             return mu
         else:
             return self.rho_bulk * self.Q # Instantaneous chain bulk density. rho_bulk is the activity parameter.
@@ -222,10 +234,3 @@ if __name__ == "__main__":
 
     polye = LinearPolymer(q,a,b,rho_bulk,sb)
     polye.calc_densities()
-
-    
-
-
-
-
-
